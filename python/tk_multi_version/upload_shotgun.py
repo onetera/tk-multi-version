@@ -290,13 +290,16 @@ class Transcoding(object):
                                       self.fileinfo.format("%h%p")+".jpg")
 
         select_code = self._get_mov_frame(self.mov_path)
+        select_code /= 30
+        if select_code == 0:
+            select_code = 1
         command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
         command.append("-r")
         command.append("24")
         command.append("-i")
         command.append(self.mov_path)
         command.append("-vf")
-        command.append("select='gte(n\,{0})*not(mod(n\,{0}))'".format(select_code/30))
+        command.append("select='gte(n\,{0})*not(mod(n\,{0}))'".format(select_code))
         command.append("-vsync")
         command.append("0")
         command.append("-f")
