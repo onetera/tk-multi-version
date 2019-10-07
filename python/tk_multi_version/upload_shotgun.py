@@ -22,7 +22,7 @@ class Output(object):
         
         self.mov_fps = float(info['sg_fps'])
         self._set_file_type(info['sg_out_format'])
-        self._set_colorspace(info['sg_colorspace'])
+        self._set_colorspace(info['sg_colorspace'],info)
         self.mov_codec = codecs[info['sg_mov_codec']]
     
     def _set_file_type(self,text):
@@ -37,12 +37,14 @@ class Output(object):
             self.file_type = "dpx"
             self.datatype = "10 bit"
     
-    def _set_colorspace(self,text):
+    def _set_colorspace(self,text,info):
         
         if not text.find("ACES") == -1 :
             self.colorspace = "ACES - %s"%text
+            self.mov_colorspace = info['sg_mov_colorspace']
         else:
             self.colorspace = text
+            self.mov_colorspace = text
 
 class Transcoding(object):
 
@@ -164,7 +166,7 @@ class Transcoding(object):
         shotgun = engine.shotgun
         output_info = shotgun.find_one("Project",[['id','is',project['id']]],
                                ['sg_colorspace','sg_mov_codec',
-                               'sg_out_format','sg_fps'])
+                               'sg_out_format','sg_fps','sg_mov_colorspace'])
 
     
     
@@ -203,7 +205,7 @@ class Transcoding(object):
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
-        nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+        nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
 
