@@ -143,6 +143,7 @@ class Transcoding(object):
         command.append("-vf")
         command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
         command.append(self.webm_path)
+        
 
         try:
             webm_p = subprocess.check_call(command)
@@ -245,6 +246,9 @@ class Transcoding(object):
 
 
     def _get_mov_frame(self,mov_file):
+        
+        if self.fileinfo.suffix() in ['ogv']:
+            mov_file = self.mp4_path
 
         command = ['rez-env',"ffmpeg","--","ffprobe"]
         command.append(mov_file)
@@ -256,6 +260,8 @@ class Transcoding(object):
         command.append("default=nk=1:nw=1")
         command.append("-v")
         command.append("quiet")
+
+        print " ".join(command)
 
         try:
             webm_p = subprocess.Popen(command,stdout=subprocess.PIPE)

@@ -110,6 +110,7 @@ class AppDialog(QtGui.QWidget):
             msg.setInformativeText(str(e))
             msg.setWindowTitle("Version Error")
             msg.exec_()
+            return
         
         text = []
         text.append(self.context.entity['name'])
