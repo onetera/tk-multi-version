@@ -247,8 +247,9 @@ class Transcoding(object):
 
     def _get_mov_frame(self,mov_file):
         
-        if self.fileinfo.suffix() in ['ogv']:
-            mov_file = self.mp4_path
+        if self.selected_type == "mov":
+            if self.fileinfo.suffix() in ['ogv']:
+                mov_file = self.mp4_path
 
         command = ['rez-env',"ffmpeg","--","ffprobe"]
         command.append(mov_file)
@@ -273,6 +274,13 @@ class Transcoding(object):
         
 
     def create_thumbnail(self):
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print self.selected_type
 
         if self.selected_type == "image":
             self.filmstream_file = ""
@@ -297,6 +305,13 @@ class Transcoding(object):
             thumb_template = os.path.join(self.thumbnail_path,
                                       self.fileinfo.format("%h%p")+".jpg")
 
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print "-----------------"
+        print self.selected_type
         select_code = self._get_mov_frame(self.mov_path)
         select_code /= 30
         if select_code == 0:
