@@ -66,8 +66,9 @@ class Transcoding(object):
             return
         if self.selected_type == "mov":
             return
-
         command = ['rez-env','nuke','--','nuke','-ix']
+        if not self.setting.colorspace.find("ACES") == -1:
+            command = ['rez-env','nuke','ocio_config','--','nuke','-ix']
         command.append(self.tmp_nuke_script_file)
         try:
             mov_p = subprocess.check_call(command)
@@ -172,6 +173,7 @@ class Transcoding(object):
     
     
         setting = Output(output_info)
+        self.setting = setting
 
         self.read_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"..")),
@@ -192,12 +194,14 @@ class Transcoding(object):
         nk += 'import os\n'
         nk += 'nuke.knob("root.first_frame", "{}" )\n'.format(self.fileinfo.start())
         nk += 'nuke.knob("root.last_frame", "{}" )\n'.format(self.fileinfo.end() )
-        if not setting.colorspace.find("ACES") == -1:
-            nk += 'nuke.root()["colorManagement"].setValue("OCIO")\n'
-            nk += 'nuke.root()["OCIO_config"].setValue("aces_1.0.1")\n'
+        #if not setting.colorspace.find("ACES") == -1:
+        #    nk += 'nuke.root()["colorManagement"].setValue("OCIO")\n'
+        #    nk += 'nuke.root()["OCIO_config"].setValue("aces_1.0.1")\n'
         nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
+        if self.fileinfo.tail() in ['.jpg','.jpeg']:
+            nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         tg = 'read'
     
         nk += 'output = "{}"\n'.format( self.mov_path )
@@ -206,6 +210,7 @@ class Transcoding(object):
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
+        #if self.fileinfo.tail() in ['.jpg','.jpeg']:
         nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
@@ -274,13 +279,6 @@ class Transcoding(object):
         
 
     def create_thumbnail(self):
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print self.selected_type
 
         if self.selected_type == "image":
             self.filmstream_file = ""
@@ -305,13 +303,6 @@ class Transcoding(object):
             thumb_template = os.path.join(self.thumbnail_path,
                                       self.fileinfo.format("%h%p")+".jpg")
 
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print "-----------------"
-        print self.selected_type
         select_code = self._get_mov_frame(self.mov_path)
         select_code /= 30
         if select_code == 0:
