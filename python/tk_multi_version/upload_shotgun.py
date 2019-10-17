@@ -200,7 +200,7 @@ class Transcoding(object):
         nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
-        if self.fileinfo.tail() in ['.jpg','.jpeg']:
+        if self.fileinfo.tail() in ['.jpg','.jpeg','.dpx']:
             nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         tg = 'read'
     
@@ -216,6 +216,7 @@ class Transcoding(object):
                                                      self.fileinfo.end())
 
         nk += 'os.remove("{}")\n'.format(self.tmp_nuke_script_file)
+        nk += 'exit()\n'
 
 
         
