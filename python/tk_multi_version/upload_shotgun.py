@@ -404,7 +404,24 @@ class UploadVersion(object):
             "sg_path_to_frames" :frame_path,
             "description" :desc
         }
-        self.version = self.sg.create("Version",data)
+        
+        search_filter = [
+            ['code','is',code],
+            ['project','is',self.context.project],
+            ['sg_task','is',self.context.task]
+            ]
+
+        current_version = self.sg.find("Version",search_filter)
+        if current_version:
+            self.version = current_version[0]
+            data = {
+            "sg_path_to_movie" :mov_path,
+            "sg_path_to_frames" :frame_path,
+            "description" :desc
+                }
+            self.sg.update("Version",self.version['id'],data)
+        else:
+            self.version = self.sg.create("Version",data)
 
     
     def upload_thumbnail(self,thumbnail_file):
