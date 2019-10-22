@@ -54,7 +54,8 @@ class FilesForm(QtGui.QWidget):
                               "*.cin",
                               "*.dpx",
                               "*.mov",
-                              "*.ogv"]
+                              "*.ogv",
+                              "*.mp4"]
 
         self.dir_model = QtGui.QFileSystemModel()
         self.file_model = QtGui.QFileSystemModel()
@@ -138,7 +139,7 @@ class FilesForm(QtGui.QWidget):
             item = model.fileInfo(index[0])
             if "*."+item.suffix() in self.image_filters:
                 print item.suffix()
-                if item.suffix() in ["mov","ogv"]:
+                if item.suffix() in ["mov","ogv","mp4"]:
                     return "mov",item
                 else:
                     return "image",item

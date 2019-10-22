@@ -80,6 +80,9 @@ class Transcoding(object):
             self.mp4_path = ""
             return
         if self.selected_type == "mov":
+            if self.fileinfo.suffix() == "mp4":
+                self.mp4_path = self.mov_path
+                return 
             self.mp4_path = self.mov_path.replace(self.fileinfo.suffix(),"mp4")
         else:
             self.mp4_path = os.path.join(os.path.abspath(
