@@ -117,7 +117,8 @@ class FilesForm(QtGui.QWidget):
          a list of individual frames of the sequence. """
         file_path = self.dir_model.filePath(self.ui.dir_view.selectedIndexes()[0])
         sequences = [x for x in pyseq.get_sequences(file_path)
-                     if x.length() > 1 and x.tail() not in ['.mov','.mp4','.ogv']]
+                     if x.tail() in ['.jpg','.exr','.dpx','.tiff'] ]
+
         return sequences
 
     def string_list_refresh(self):
@@ -138,7 +139,6 @@ class FilesForm(QtGui.QWidget):
         if isinstance(model, QtGui.QFileSystemModel):
             item = model.fileInfo(index[0])
             if "*."+item.suffix() in self.image_filters:
-                print item.suffix()
                 if item.suffix() in ["mov","ogv","mp4"]:
                     return "mov",item
                 else:
