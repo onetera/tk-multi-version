@@ -2,8 +2,9 @@
 
 import sgtk
 import os
+import platform
 import subprocess
-import pyseq
+from .ext_packages import pyseq
 import shutil
 
 
@@ -122,32 +123,53 @@ class Transcoding(object):
             self.webm_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"webm")
+        if platform.system() == "Linux":
+
+            command = ['rez-env','ffmpeg','--','ffmpeg','-y']
+            command.append("-i")
+            command.append(self.mov_path)
+            command.append("-vcodec")
+            command.append("libvpx")
+            command.append("-pix_fmt")
+            command.append("yuv420p")
+            command.append("-g")
+            command.append("30")
+            command.append("-b:v")
+            command.append("2000k")
+            command.append("-quality")
+            command.append("realtime")
+            command.append("-cpu-used")
+            command.append("0")
+            command.append("-qmin")
+            command.append("10")
+            command.append("-qmax")
+            command.append("42")
+            command.append("-vf")
+            command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
+            command.append(self.webm_path)
+
+        else:
         
-        command = ['rez-env','ffmpeg','--','ffmpeg','-y']
-        command.append("-i")
-        command.append(self.mov_path)
-        command.append("-vcodec")
-        command.append("libvpx")
-        #command.append("-r")
-        #command.append("24")
-        command.append("-pix_fmt")
-        command.append("yuv420p")
-        command.append("-g")
-        command.append("30")
-        command.append("-b:v")
-        command.append("2000k")
-        command.append("-quality")
-        command.append("realtime")
-        command.append("-cpu-used")
-        command.append("0")
-        command.append("-qmin")
-        command.append("10")
-        command.append("-qmax")
-        command.append("42")
-        command.append("-vf")
-        command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
-        command.append(self.webm_path)
-        
+            command = ['rez-env','ffmpeg','--','ffmpeg','-y']
+            command.append("-i")
+            command.append(self.mov_path.replace("/","\\"))
+            command.append("-vcodec")
+            command.append("libvpx")
+            command.append("-pix_fmt")
+            command.append("yuv420p")
+            command.append("-g")
+            command.append("30")
+            command.append("-b:v")
+            command.append("2000k")
+            command.append("-quality")
+            command.append("realtime")
+            command.append("-cpu-used")
+            command.append("0")
+            command.append("-qmin")
+            command.append("10")
+            command.append("-qmax")
+            command.append("42")
+            command.append(self.webm_path.replace("/","\\"))
 
         try:
             webm_p = subprocess.check_call(command)
@@ -290,7 +312,7 @@ class Transcoding(object):
             return
         if self.selected_type == "mov":
             self.thumbnail_path = self.mov_path.replace(
-                self.fileinfo.suffix(),"")
+                self.fileinfo.suffix(),"thumb")
         else:
             self.thumbnail_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
@@ -312,19 +334,34 @@ class Transcoding(object):
         select_code /= 30
         if select_code == 0:
             select_code = 1
-        command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
-        command.append("-r")
-        command.append("24")
-        command.append("-i")
-        command.append(self.mov_path)
-        command.append("-vf")
-        command.append("select='gte(n\,{0})*not(mod(n\,{0}))'".format(select_code))
-        command.append("-vsync")
-        command.append("0")
-        command.append("-f")
-        command.append("image2")
-        command.append(thumb_template)
+        if platform.system() == "Linux":
+            command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
+            command.append("-r")
+            command.append("24")
+            command.append("-i")
+            command.append(self.mov_path)
+            command.append("-vf")
+            command.append("select='gte(n\,{0})*not(mod(n\,{0}))'".format(select_code))
+            command.append("-vsync")
+            command.append("0")
+            command.append("-f")
+            command.append("image2")
+            command.append(thumb_template)
         
+        else:
+            command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
+            command.append("-r")
+            command.append("24")
+            command.append("-i")
+            command.append(self.mov_path.replace("/","\\"))
+            command.append("-vf")
+            command.append("select=gte(n\,{0})*not(mod(n\,{0}))".format(select_code))
+            command.append("-vsync")
+            command.append("0")
+            command.append("-f")
+            command.append("image2")
+            thumb_template =  thumb_template.replace("%","%%")
+            command.append(thumb_template.replace("/","\\"))
 
         try:
             webm_p = subprocess.check_call(command)
@@ -344,18 +381,30 @@ class Transcoding(object):
             self.filmstream_file = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"_film_-0.jpg")
-        command = ['montage']
-        command.append(thumb_template)
-        command.append("-geometry")
-        command.append("240x+0+0")
-        command.append("-tile")
-        command.append("x1")
-        command.append("-format")
-        command.append("jpeg")
-        command.append("-quality")
-        command.append("92")
-        command.append(self.filmstream_file)
-        
+        if platform.system() == "Linux":
+            command = ['montage']
+            command.append(thumb_template)
+            command.append("-geometry")
+            command.append("240x+0+0")
+            command.append("-tile")
+            command.append("x1")
+            command.append("-format")
+            command.append("jpeg")
+            command.append("-quality")
+            command.append("92")
+            command.append(self.filmstream_file)
+        else:
+            command = ['magick','montage']
+            command.append(thumb_template.replace("/","\\"))
+            command.append("-geometry")
+            command.append("240x+0+0")
+            command.append("-tile")
+            command.append("x1")
+            command.append("-format")
+            command.append("jpeg")
+            command.append("-quality")
+            command.append("92")
+            command.append(self.filmstream_file.replace("/","\\"))
 
         try:
             webm_p = subprocess.check_call(command)
@@ -370,12 +419,14 @@ class Transcoding(object):
         
         shutil.copyfile(thumbnail_file , self.thumbnail_path+".jpg")
         self.thumbnail_file = self.thumbnail_path + ".jpg"
-
-        command = ['rm','-rf',self.thumbnail_path]
-        try:
-            webm_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("rm thumbnail_path {}".format(e))
+        if platform.system() == "Linux":
+            command = ['rm','-rf',self.thumbnail_path]
+        #else:
+            #command = ['rd','/S','/Q',self.thumbnail_path.replace("/","\\")]
+            try:
+                webm_p = subprocess.check_call(command)
+            except Exception as e:
+                raise Exception("rm thumbnail_path {0},{1}".format(e,command))
 
 class UploadVersion(object):
     
@@ -460,3 +511,5 @@ class UploadVersion(object):
             return
         self.sg.upload("Version",self.version['id'],webm_file,'sg_uploaded_movie_webm')
         os.remove(webm_file)
+
+
