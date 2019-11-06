@@ -77,7 +77,7 @@ class Transcoding(object):
 
     def create_mp4(self):
         if self.selected_type == "image":
-            self.mp4_path = ""
+            self.mp4_path = self.mov_path
             return
         if self.selected_type == "mov":
             if self.fileinfo.suffix() == "mp4":
@@ -162,7 +162,8 @@ class Transcoding(object):
             return
         if self.selected_type == "image":
             self.read_path = self.fileinfo.absoluteFilePath()
-            self.mov_path = ""
+            self.mov_path = self.fileinfo.absoluteFilePath()
+
             return
 
         engine = sgtk.platform.current_engine()
@@ -449,6 +450,7 @@ class UploadVersion(object):
     def upload_mp4(self,mp4_file):
 
         if self.selected_type == "image":
+            self.sg.upload("Version",self.version['id'],mp4_file,'sg_uploaded_movie_image')
             return
         self.sg.upload("Version",self.version['id'],mp4_file,'sg_uploaded_movie_mp4')
     
