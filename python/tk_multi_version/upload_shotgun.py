@@ -44,8 +44,12 @@ class Output(object):
             self.colorspace = "ACES - %s"%text
             self.mov_colorspace = info['sg_mov_colorspace']
         else:
-            self.colorspace = text
-            self.mov_colorspace = text
+            if not info['sg_mov_colorspace'] :
+                self.colorspace = text
+                self.mov_colorspace = text
+            else:
+                self.colorspace = text
+                self.mov_colorspace = info['sg_mov_colorspace']
 
 class Transcoding(object):
 
@@ -226,7 +230,8 @@ class Transcoding(object):
         nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
-        if self.fileinfo.tail() in ['.jpg','.jpeg','.dpx']:
+        nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+        if self.fileinfo.tail() in ['.jpg','.jpeg']:
             nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         tg = 'read'
     
