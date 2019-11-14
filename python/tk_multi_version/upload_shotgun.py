@@ -238,7 +238,7 @@ class Transcoding(object):
         nk += 'output = "{}"\n'.format( self.mov_path )
 
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
-        nk += 'if width > 2048 : \n'
+        nk += 'if width > 3000 : \n'
         nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
         nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
         nk += 'else : \n'
