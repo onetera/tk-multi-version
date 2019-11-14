@@ -234,14 +234,19 @@ class Transcoding(object):
         if self.fileinfo.tail() in ['.jpg','.jpeg']:
             nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         tg = 'read'
-    
+        
         nk += 'output = "{}"\n'.format( self.mov_path )
-        nk += 'write   = nuke.nodes.Write(name="mov_write", inputs = [%s],file=output )\n'% tg
+
+        nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
+        nk += 'if width > 2048 : \n'
+        nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
+        nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
+        nk += 'else : \n'
+        nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [read],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
-        #if self.fileinfo.tail() in ['.jpg','.jpeg']:
         nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
