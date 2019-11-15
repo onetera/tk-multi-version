@@ -72,8 +72,10 @@ class Transcoding(object):
         if self.selected_type == "mov":
             return
         command = ['rez-env','nuke','--','nuke','-ix']
-        if not self.setting.colorspace.find("ACES") == -1:
+        if not self.setting.colorspace.find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env','nuke','ocio_config','--','nuke','-ix']
+        if not self.setting.colorspace.find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env','nuke','alexa_config','--','nuke','-ix']
         command.append(self.tmp_nuke_script_file)
         try:
             mov_p = subprocess.check_call(command)
@@ -230,9 +232,10 @@ class Transcoding(object):
         nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
-        nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
-        if self.fileinfo.tail() in ['.jpg','.jpeg']:
-            nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+        if self.fileinfo.tail() in ['.dpx','.exr']:
+            nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+        else:
+            nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
         tg = 'read'
         
         nk += 'output = "{}"\n'.format( self.mov_path )
@@ -247,7 +250,10 @@ class Transcoding(object):
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
-        nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+        if self.fileinfo.tail() in ['.dpx','.exr']:
+            nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+        else:
+            nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
 
