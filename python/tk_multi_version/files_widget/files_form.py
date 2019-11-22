@@ -138,7 +138,7 @@ class FilesForm(QtGui.QWidget):
         model = self.ui.file_view.model()
         if isinstance(model, QtGui.QFileSystemModel):
             item = model.fileInfo(index[0])
-            if "*."+item.suffix() in self.image_filters:
+            if "*."+item.suffix().lower() in self.image_filters:
                 if item.suffix() in ["mov","ogv","mp4"]:
                     return "mov",item
                 else:
