@@ -210,8 +210,13 @@ class Transcoding(object):
         shot_info = None
         shotgun = engine.shotgun
         entity_ent = self.context.entity
+        plate_ent = shotgun.find_one("PublishedFileType",[['id','is',54]])
         if entity_ent['type'] == "Shot":
-            publishfile_ents = shotgun.find("PublishedFile",[["entity",'is',entity_ent]],['sg_colorspace'])
+            filter_pub = [
+                ['entity','is',entity_ent],
+                ['published_file_type','is',plate_ent]
+            ]
+            publishfile_ents = shotgun.find("PublishedFile",filter_pub,['sg_colorspace'])
             if publishfile_ents : 
                 shot_info = publishfile_ents[-1]
 
