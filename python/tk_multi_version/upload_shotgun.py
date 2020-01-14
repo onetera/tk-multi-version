@@ -19,13 +19,14 @@ codecs = {
 class Output(object):
     
 
-    def __init__(self,info):
+    def __init__(self,info,shot_info):
         
         self.mov_fps = float(info['sg_fps'])
+        self.shot_info = shot_info
         self._set_file_type(info['sg_out_format'])
         self._set_colorspace(info['sg_colorspace'],info)
         self.mov_codec = codecs[info['sg_mov_codec']]
-    
+
     def _set_file_type(self,text):
         
         if text =="exr 32bit":
@@ -50,6 +51,16 @@ class Output(object):
             else:
                 self.colorspace = text
                 self.mov_colorspace = info['sg_mov_colorspace']
+
+        if self.shot_info:
+            if self.shot_info['sg_colorspace']:
+                shot_colorspace = self.shot_info['sg_colorspace']
+                if not shot_colorspace.find("ACES") == -1 :
+                    shot_colorspace = "ACES - %s"%shot_colorspace
+
+                if not self.colorspace == shot_colorspace:
+                    self.colorspace = shot_colorspace
+                    self.mov_colorspace = shot_colorspace
 
 class Transcoding(object):
 
@@ -196,16 +207,28 @@ class Transcoding(object):
 
         engine = sgtk.platform.current_engine()
         project = self.context.project
-
+        shot_info = None
         shotgun = engine.shotgun
+        entity_ent = self.context.entity
+        if entity_ent['type'] == "Shot":
+            publishfile_ents = shotgun.find("PublishedFile",[["entity",'is',entity_ent]],['sg_colorspace'])
+            if publishfile_ents : 
+                shot_info = publishfile_ents[-1]
+
+        
         output_info = shotgun.find_one("Project",[['id','is',project['id']]],
                                ['sg_colorspace','sg_mov_codec',
                                'sg_out_format','sg_fps','sg_mov_colorspace'])
-
+        
+        
     
-    
-        setting = Output(output_info)
+        setting = Output(output_info,shot_info)
         self.setting = setting
+
+        print "=======settting info============"
+        print self.setting.colorspace
+        print self.setting.mov_colorspace
+        print "=======settting info============"
 
         self.read_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"..")),
