@@ -55,8 +55,8 @@ class Output(object):
         if self.shot_info:
             if self.shot_info['sg_colorspace']:
                 shot_colorspace = self.shot_info['sg_colorspace']
-                if not shot_colorspace.find("ACES") == -1 :
-                    shot_colorspace = "ACES - %s"%shot_colorspace
+                #if not shot_colorspace.find("ACES") == -1 :
+                #    shot_colorspace = "ACES - %s"%shot_colorspace
 
                 if not self.colorspace == shot_colorspace:
                     self.colorspace = shot_colorspace
