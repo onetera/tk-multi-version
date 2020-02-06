@@ -278,7 +278,7 @@ class Transcoding(object):
 
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
         if check_tag:
-            nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1336 0 0 1920 1336 1 4:3")\n'
+            nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1080 0 0 1920 1080 1",resize="height",black_outside=True)\n'
             nk += 'write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
         else:
             nk += 'if width > 3000 : \n'
