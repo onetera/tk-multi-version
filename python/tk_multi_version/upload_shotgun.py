@@ -208,6 +208,7 @@ class Transcoding(object):
         engine = sgtk.platform.current_engine()
         project = self.context.project
         shot_info = None
+        check_tag = None
         shotgun = engine.shotgun
         entity_ent = self.context.entity
         plate_ent = shotgun.find_one("PublishedFileType",[['id','is',54]])
@@ -219,6 +220,13 @@ class Transcoding(object):
             publishfile_ents = shotgun.find("PublishedFile",filter_pub,['sg_colorspace'])
             if publishfile_ents : 
                 shot_info = publishfile_ents[-1]
+            
+            shot_ent = shotgun.find_one("Shot",[['id','is',entity_ent['id']]],['tags'])
+            check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591]] 
+
+        
+
+        
 
         
         output_info = shotgun.find_one("Project",[['id','is',project['id']]],
@@ -269,11 +277,15 @@ class Transcoding(object):
         nk += 'output = "{}"\n'.format( self.mov_path )
 
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
-        nk += 'if width > 3000 : \n'
-        nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
-        nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
-        nk += 'else : \n'
-        nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [read],file=output )\n'
+        if check_tag:
+            nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1336 0 0 1920 1336 1 4:3")\n'
+            nk += 'write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
+        else:
+            nk += 'if width > 3000 : \n'
+            nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
+            nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
+            nk += 'else : \n'
+            nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [read],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
