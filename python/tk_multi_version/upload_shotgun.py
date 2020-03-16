@@ -256,8 +256,18 @@ class Transcoding(object):
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"py")
 
+        timecard = sum([ x['duration'] for x  in 
+                    shotgun.find("TimeLog",
+                                 [['entity','is',self.context.task]],
+                                 ['duration']) ])
+        
+        if not timecard :
+            timecard = 0
+        else:
+            timecard = timecard / 60
 
         nk = ''
+        nk += '#-*- coding: utf-8 -*-\n'
         nk += 'import nuke\n'
         nk += 'import os\n'
         nk += 'nuke.knob("root.first_frame", "{}" )\n'.format(self.fileinfo.start())
@@ -277,15 +287,24 @@ class Transcoding(object):
         nk += 'output = "{}"\n'.format( self.mov_path )
 
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
+        
+
         if check_tag:
             nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1080 0 0 1920 1080 1",resize="height",black_outside=True)\n'
-            nk += 'write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
+            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
         else:
             nk += 'if width > 3000 : \n'
             nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
-            nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [reformat],file=output )\n'
+            nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
             nk += 'else : \n'
-            nk += '    write   = nuke.nodes.Write(name="mov_write", inputs = [read],file=output )\n'
+            nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [read])\n'
+
+        nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
+        nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
+        nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
+        nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
+        nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
+        nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
