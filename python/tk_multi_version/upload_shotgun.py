@@ -120,8 +120,9 @@ class Transcoding(object):
         #command.append("veryslow")
         command.append("-crf")
         command.append("18")
-        command.append("-vf")
-        command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
+        if platform.system() == "Linux":
+            command.append("-vf")
+            command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
         command.append(self.mp4_path)
         
 
@@ -222,7 +223,7 @@ class Transcoding(object):
                 shot_info = publishfile_ents[-1]
             
             shot_ent = shotgun.find_one("Shot",[['id','is',entity_ent['id']]],['tags'])
-            check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591]] 
+            check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591,4830]] 
 
         
 
@@ -265,6 +266,8 @@ class Transcoding(object):
             timecard = 0
         else:
             timecard = timecard / 60
+        
+
 
         nk = ''
         nk += '#-*- coding: utf-8 -*-\n'
@@ -275,7 +278,11 @@ class Transcoding(object):
         #if not setting.colorspace.find("ACES") == -1:
         #    nk += 'nuke.root()["colorManagement"].setValue("OCIO")\n'
         #    nk += 'nuke.root()["OCIO_config"].setValue("aces_1.0.1")\n'
-        nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
+
+        if platform.system() in ('Windows',"Microsoft"):
+            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path.replace("\\","/") )
+        else:
+            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
         if self.fileinfo.tail() in ['.dpx','.exr']:
@@ -284,7 +291,10 @@ class Transcoding(object):
             nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
         tg = 'read'
         
-        nk += 'output = "{}"\n'.format( self.mov_path )
+        if platform.system() in ('Windows',"Microsoft"):
+            nk += 'output = "{}"\n'.format( self.mov_path.replace("\\","/") )
+        else:
+            nk += 'output = "{}"\n'.format( self.mov_path )
 
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
         
@@ -316,7 +326,8 @@ class Transcoding(object):
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
 
-        nk += 'os.remove("{}")\n'.format(self.tmp_nuke_script_file)
+        if not platform.system() in ('Windows',"Microsoft"):
+            nk += 'os.remove("{}")\n'.format(self.tmp_nuke_script_file)
         nk += 'exit()\n'
 
 
