@@ -315,7 +315,7 @@ class Transcoding(object):
         nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
         nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
         nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
-        nk += 'burnin["description"].setValue("{}")\n'.format(self.desc)
+        nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
         nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
