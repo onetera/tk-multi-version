@@ -87,10 +87,11 @@ class AppDialog(QtGui.QWidget):
         selected_type,item = self.file_form.selected_item()
         if not item:
             return
-        trascoding = Transcoding(item,self.context,selected_type)
+        desc = self.ui.desc_edit.toPlainText()
+
+        trascoding = Transcoding(item,self.context,selected_type,desc)
         version = UploadVersion(item,self.context,selected_type)
         trascoding.create_nuke_script()
-        desc = self.ui.desc_edit.toPlainText()
         try:
             trascoding.create_mov()
             trascoding.create_mp4()

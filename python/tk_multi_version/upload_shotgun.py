@@ -64,7 +64,7 @@ class Output(object):
 
 class Transcoding(object):
 
-    def __init__(self,fileinfo,context,selected_type):
+    def __init__(self,fileinfo,context,selected_type,desc):
 
         
         if selected_type in ["mov","image"]:
@@ -74,6 +74,7 @@ class Transcoding(object):
         self.selected_type = selected_type
         self.context = context
         self.selected_type = selected_type
+        self.desc = desc
             
 
     def create_mov(self):
@@ -314,6 +315,7 @@ class Transcoding(object):
         nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
         nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
         nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
+        nk += 'burnin["description"].setValue("{}")\n'.format(self.desc)
         nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
