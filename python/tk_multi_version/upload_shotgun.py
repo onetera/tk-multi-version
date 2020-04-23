@@ -197,15 +197,13 @@ class Transcoding(object):
             command.append(self.webm_path.replace("/","\\"))
 
         try:
-            print command
-            print command
-            print command
-            print command
             webm_p = subprocess.check_call(command)
         except Exception as e:
             raise Exception("make webm {}".format(e))
 
     def create_nuke_script(self):
+
+        self.mov_webm_path = None
 
         if self.selected_type == "mov":
             self.read_path = ""
@@ -340,7 +338,6 @@ class Transcoding(object):
                                                      self.fileinfo.end())
         #fix play webm in chrome and firefox 
         
-        self.mov_webm_path = None
 
         if not setting.mov_fps == "24":
             self.mov_webm_path = os.path.join(os.path.abspath(
@@ -637,6 +634,7 @@ class UploadVersion(object):
             return
         self.sg.upload("Version",self.version['id'],webm_file,'sg_uploaded_movie_webm')
         os.remove(webm_file)
-        os.remove(mov_webm_path)
+        if mov_webm_path:
+            os.remove(mov_webm_path)
 
 
