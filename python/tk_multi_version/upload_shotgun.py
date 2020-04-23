@@ -146,7 +146,10 @@ class Transcoding(object):
 
             command = ['rez-env','ffmpeg','--','ffmpeg','-y']
             command.append("-i")
-            command.append(self.mov_path)
+            if self.mov_webm_path :
+                command.append(self.mov_webm_path)
+            else:
+                command.append(self.mov_path)
             command.append("-vcodec")
             command.append("libvpx")
             command.append("-pix_fmt")
@@ -171,7 +174,10 @@ class Transcoding(object):
         
             command = ['rez-env','ffmpeg','--','ffmpeg','-y']
             command.append("-i")
-            command.append(self.mov_path.replace("/","\\"))
+            if self.mov_webm_path :
+                command.append(self.mov_webm_path.replace("/","\\"))
+            else:
+                command.append(self.mov_path.replace("/","\\"))
             command.append("-vcodec")
             command.append("libvpx")
             command.append("-pix_fmt")
@@ -191,6 +197,10 @@ class Transcoding(object):
             command.append(self.webm_path.replace("/","\\"))
 
         try:
+            print command
+            print command
+            print command
+            print command
             webm_p = subprocess.check_call(command)
         except Exception as e:
             raise Exception("make webm {}".format(e))
@@ -320,13 +330,41 @@ class Transcoding(object):
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
-        nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
+        #nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
+        nk += 'write["mov64_fps"].setValue(24)\n'
         if self.fileinfo.tail() in ['.dpx','.exr']:
             nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         else:
             nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
+        #fix play webm in chrome and firefox 
+        
+        self.mov_webm_path = None
+
+        if not setting.mov_fps == "24":
+            self.mov_webm_path = os.path.join(os.path.abspath(
+                                    os.path.join(self.fileinfo.path(),"../..")),
+                                    self.fileinfo.format("%h").split(".")[0]+"_for_webm.mov")
+            
+            
+            if platform.system() in ('Windows',"Microsoft"):
+                nk += 'webm_output = "{}"\n'.format( self.mov_webm_path.replace("\\","/") )
+            else:
+                nk += 'webm_output = "{}"\n'.format( self.mov_webm_path )
+
+            nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=webm_output )\n'
+            nk += 'write["file_type"].setValue( "mov" )\n'
+            nk += 'write["create_directories"].setValue(True)\n'
+            nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+            nk += 'write["mov64_fps"].setValue(24)\n'
+            if self.fileinfo.tail() in ['.dpx','.exr']:
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+            else:
+                nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
+            nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
+                                                     self.fileinfo.end())
+
 
         if not platform.system() in ('Windows',"Microsoft"):
             nk += 'os.remove("{}")\n'.format(self.tmp_nuke_script_file)
@@ -593,11 +631,12 @@ class UploadVersion(object):
             return
         self.sg.upload("Version",self.version['id'],mp4_file,'sg_uploaded_movie_mp4')
     
-    def upload_webm(self,webm_file):
+    def upload_webm(self,webm_file,mov_webm_path):
 
         if self.selected_type == "image":
             return
         self.sg.upload("Version",self.version['id'],webm_file,'sg_uploaded_movie_webm')
         os.remove(webm_file)
+        os.remove(mov_webm_path)
 
 

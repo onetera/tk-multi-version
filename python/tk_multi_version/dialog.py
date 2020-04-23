@@ -103,7 +103,7 @@ class AppDialog(QtGui.QWidget):
             version.upload_filmstrip_thumbnail(trascoding.filmstream_file)
             #version.upload_mov(trascoding.mov_path)
             version.upload_mp4(trascoding.mp4_path)
-            version.upload_webm(trascoding.webm_path)
+            version.upload_webm(trascoding.webm_path,trascoding.mov_webm_path)
         except Exception as e:
             msg = QtGui.QMessageBox()
             msg.setIcon(QtGui.QMessageBox.Critical)
