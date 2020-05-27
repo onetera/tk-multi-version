@@ -232,7 +232,7 @@ class Transcoding(object):
                 shot_info = publishfile_ents[-1]
             
             shot_ent = shotgun.find_one("Shot",[['id','is',entity_ent['id']]],['tags'])
-            check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591,4830]] 
+            #check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591,4830]] 
 
         
 
