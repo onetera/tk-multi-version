@@ -322,7 +322,10 @@ class Transcoding(object):
         nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
         nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
         nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
-        nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
+        if self.context.project['name'] in ['sweethome','westworld']:
+            nk += 'burnin["timecard"].setValue("")\n'
+        else:
+            nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
         nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
         nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
