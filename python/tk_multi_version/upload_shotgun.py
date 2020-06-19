@@ -83,11 +83,11 @@ class Transcoding(object):
             return
         if self.selected_type == "mov":
             return
-        command = ['rez-env','nuke-11.2.5','--','nuke','-ix']
+        command = ['rez-env','nuke-11','--','nuke','-ix']
         if not self.setting.colorspace.find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env','nuke-11.2.5','ocio_config','--','nuke','-ix']
+            command = ['rez-env','nuke-11','ocio_config','--','nuke','-ix']
         if not self.setting.colorspace.find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env','nuke-11.2.5','alexa_config','--','nuke','-ix']
+            command = ['rez-env','nuke-11','alexa_config','--','nuke','-ix']
         command.append(self.tmp_nuke_script_file)
         try:
             mov_p = subprocess.check_call(command)
