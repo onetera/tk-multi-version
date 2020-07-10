@@ -583,6 +583,7 @@ class UploadVersion(object):
             "sg_version_type" : "review",
             "sg_path_to_movie" :mov_path,
             "sg_path_to_frames" :frame_path,
+            "sg_first_frame" :1,
             "description" :desc
         }
         
