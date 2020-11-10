@@ -13,6 +13,7 @@ import sys
 import os
 import traceback
 
+
 from .my_tasks.my_tasks_form import MyTasksForm
 from .my_tasks.my_tasks_model import MyTasksModel
 from .files_widget.files_form import FilesForm
@@ -23,6 +24,7 @@ from sgtk.platform.qt import QtCore, QtGui
 from .ui.dialog import Ui_Dialog
 from .framework_qtwidgets import *
 from .upload_shotgun import *
+
 
 # There are two loggers
 # logger is shotgun logger
@@ -80,6 +82,8 @@ class AppDialog(QtGui.QWidget):
         
         
         self.create_context_form()
+        self.create_status_form()
+        self.status_init = 0
         self.ui.upload_btn.clicked.connect(self._upload)
     
 
@@ -141,9 +145,12 @@ class AppDialog(QtGui.QWidget):
         self.file_form = FilesForm(init_path)
         self.ui.source_widget.addTab(self.file_form,"Select")
         self._context_widget.set_context(self.context)
+        self.get_task_status()
+        
     
 
     def create_context_form(self):
+
         self._context_widget = context_selector.ContextWidget(self)
         self._context_widget.set_up(self._task_manager)
         self._context_widget.setFixedWidth(550)
@@ -153,7 +160,57 @@ class AppDialog(QtGui.QWidget):
         self._context_widget.restrict_entity_types_by_link(
             "PublishedFile", "entity")
         self._context_widget.set_context(sgtk.platform.current_bundle().context)
-        self.ui.context_widget.addTab(self._context_widget,"Context")
+        self.context_layout = QtGui.QVBoxLayout()
+        self.context_layout.setSpacing(4)
+        self.context_layout.setContentsMargins(0, 0, 0, 0)
+        self.context_layout.addWidget(self._context_widget)
+        self.context_tab = QtGui.QWidget()
+        self.context_tab.setLayout(self.context_layout)
+        self.ui.context_widget.addTab(self.context_tab,"Context")
+
+    def create_status_form(self):
+
+        self._fields_manager = shotgun_fields.ShotgunFieldManager(
+            self,
+            bg_task_manager=self._task_manager)
+
+        form_layout = QtGui.QGridLayout()
+        form_layout.setSpacing(4)
+        entity_type = "Task"
+        #entity_query = [["entity",'is',self.context.entity],
+        #                ['id','is',self.context.task['id']]]
+        field = 'sg_status_list'
+        #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
+        #entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
+        field_display_name = shotgun_globals.get_field_display_name(
+            entity_type, field )
+        self.editable_field_widget = self._fields_manager.create_widget(
+            entity_type, field, entity=None, parent=self
+                    )
+        self.editable_field_widget.value_changed.connect(self.update_status)
+
+        lbl = QtGui.QLabel("%s:" % (field_display_name,))
+        form_layout.addWidget(lbl,0,0,QtCore.Qt.AlignLeft)
+        form_layout.addWidget(self.editable_field_widget,0,1,QtCore.Qt.AlignRight)
+        self.context_layout.addLayout(form_layout)
+
+    
+    def update_status(self):
+        if not self.context:
+            return
+        status = self.editable_field_widget.get_value()
+        data = {'sg_status_list': status}
+        self._app.shotgun.update('Task',self.context.task['id'],data)
+
+
+    def get_task_status(self):
+        entity_type = "Task"
+        entity_query = [["entity",'is',self.context.entity],
+                        ['id','is',self.context.task['id']]]
+        fields = sorted(self._app.shotgun.schema_field_read(entity_type).keys())
+        #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
+        entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
+        self.editable_field_widget.set_value(entity['sg_status_list'])
 
     def closeEvent(self, event):
         """
@@ -235,3 +292,6 @@ class AppDialog(QtGui.QWidget):
             self._my_tasks_model.async_refresh()
         # if self._facility_tasks_model:
         #     self._facility_tasks_model.async_refresh()
+
+
+
