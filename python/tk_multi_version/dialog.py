@@ -150,7 +150,7 @@ class AppDialog(QtGui.QWidget):
     
 
     def create_context_form(self):
-
+    
         self._context_widget = context_selector.ContextWidget(self)
         self._context_widget.set_up(self._task_manager)
         self._context_widget.setFixedWidth(550)
@@ -169,6 +169,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.context_widget.addTab(self.context_tab,"Context")
 
     def create_status_form(self):
+        
 
         self._fields_manager = shotgun_fields.ShotgunFieldManager(
             self,
@@ -182,18 +183,20 @@ class AppDialog(QtGui.QWidget):
         field = 'sg_status_list'
         #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
         #entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
-        field_display_name = shotgun_globals.get_field_display_name(
-            entity_type, field )
-        self.editable_field_widget = self._fields_manager.create_widget(
-            entity_type, field, entity=None, parent=self
-                    )
-        self.editable_field_widget.value_changed.connect(self.update_status)
+        try:
+            field_display_name = shotgun_globals.get_field_display_name(
+                entity_type, field )
+            self.editable_field_widget = self._fields_manager.create_widget(
+                entity_type, field, entity=None, parent=self
+                        )
+            self.editable_field_widget.value_changed.connect(self.update_status)
 
-        lbl = QtGui.QLabel("%s:" % (field_display_name,))
-        form_layout.addWidget(lbl,0,0,QtCore.Qt.AlignLeft)
-        form_layout.addWidget(self.editable_field_widget,0,1,QtCore.Qt.AlignRight)
-        self.context_layout.addLayout(form_layout)
-
+            lbl = QtGui.QLabel("%s:" % (field_display_name,))
+            form_layout.addWidget(lbl,0,0,QtCore.Qt.AlignLeft)
+            form_layout.addWidget(self.editable_field_widget,0,1,QtCore.Qt.AlignRight)
+            self.context_layout.addLayout(form_layout)
+        except :
+            pass
     
     def update_status(self):
         if not self.context:
