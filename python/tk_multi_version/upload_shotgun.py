@@ -334,7 +334,10 @@ class Transcoding(object):
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         #nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
-        nk += 'write["mov64_fps"].setValue(24)\n'
+        if self.context.project['name'] in ['voice4', 'robin', 'westworld']:
+            nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
+        else:
+            nk += 'write["mov64_fps"].setValue(24)\n'
         if self.fileinfo.tail() in ['.dpx','.exr']:
             nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         else:
@@ -359,7 +362,10 @@ class Transcoding(object):
             nk += 'write["file_type"].setValue( "mov" )\n'
             nk += 'write["create_directories"].setValue(True)\n'
             nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
-            nk += 'write["mov64_fps"].setValue(24)\n'
+            if self.context.project['name'] in ['voice4','robin', 'westworld']:
+                nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
+            else:
+                nk += 'write["mov64_fps"].setValue(24)\n'
             if self.fileinfo.tail() in ['.dpx','.exr']:
                 nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
             else:
