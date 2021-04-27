@@ -310,9 +310,11 @@ class Transcoding(object):
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
         
 
-        if check_tag:
-            nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1080 0 0 1920 1080 1",resize="height",black_outside=True)\n'
-            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
+        #if check_tag:
+        #    nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1080 0 0 1920 1080 1",resize="height",black_outside=True)\n'
+        #    nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
+        if self.context.project['name'] in ['school','westworld']:
+            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [read])\n'
         else:
             nk += 'if width > 3000 : \n'
             nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
