@@ -77,42 +77,70 @@ class Transcoding(object):
         self.desc = desc
             
 
-    def create_mov(self):
-
+    def create_mov(self, qc = False ):
         if self.selected_type == "image":
             return
         if self.selected_type == "mov":
             return
-        command = ['rez-env','nuke-11','--','nuke','-ix']
+        nuke_ver = 'nuke-13' if qc else 'nuke-11'
+        command = ['rez-env', nuke_ver,'--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env','nuke-11','ocio_config','--','nuke','-ix']
+            command = ['rez-env', nuke_ver ,'ocio_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env','nuke-11','alexa_config','--','nuke','-ix']
+            command = ['rez-env', nuke_ver,'alexa_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env','nuke-11','legacy_config','--','nuke','-ix']
-        command.append(self.tmp_nuke_script_file)
+            command = ['rez-env', nuke_ver,'legacy_config','--','nuke','-ix']
+        
+        nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
+
+        command.append( nuke_script_file )
+
+
         try:
             mov_p = subprocess.check_call(command)
         except Exception as e:
             raise Exception("make mov {}".format(e))
 
-    def create_mp4(self):
+    def create_mp4(self, qc = False ):
+        qc_prefix = 'qc_' if qc else '' 
         if self.selected_type == "image":
-            self.mp4_path = self.mov_path
+            if qc:
+                self.qc_mp4_path = self.qc_mov_path
+            else:
+                self.mp4_path = self.mov_path
             return
         if self.selected_type == "mov":
             if self.fileinfo.suffix() == "mp4":
-                self.mp4_path = self.mov_path
+                if qc:
+                    self.qc_mp4_path = self.qc_mov_path
+                else:
+                    self.mp4_path = self.mov_path
                 return 
-            self.mp4_path = self.mov_path.replace(self.fileinfo.suffix(),"mp4")
+            if qc:
+                self.qc_mp4_path = self.qc_mov_path.replace(self.fileinfo.suffix(),"mp4")
+            else:
+                self.mp4_path = self.mov_path.replace(self.fileinfo.suffix(),"mp4")
         else:
-            self.mp4_path = os.path.join(os.path.abspath(
+            if qc:
+                self.qc_mp4_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 qc_prefix + self.fileinfo.format("%h")+"mp4")
+            else:
+                self.mp4_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"mp4")
+
+
+        if qc :
+            mov_path = os.path.dirname( self.mov_path ) + os.sep + qc_prefix + os.path.basename( self.mov_path )
+            mp4_path = self.qc_mp4_path
+        else:
+            mov_path = self.mov_path 
+            mp4_path = self.mp4_path
         
         command = ['rez-env','ffmpeg','--','ffmpeg','-y']
         command.append("-i")
-        command.append(self.mov_path)
+        command.append( mov_path )
         command.append("-vcodec")
         command.append("libx264")
         #command.append("-r")
@@ -126,7 +154,7 @@ class Transcoding(object):
         if platform.system() == "Linux":
             command.append("-vf")
             command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
-        command.append(self.mp4_path)
+        command.append( mp4_path )
         
 
         try:
@@ -134,24 +162,43 @@ class Transcoding(object):
         except Exception as e:
             raise Exception("make mp4 {}".format(e))
 
-    def create_webm(self):
+    def create_webm(self, qc = False ):
+        qc_prefix = 'qc_' if qc else '' 
         if self.selected_type == "image":
             self.webm_path = ""
             return
         if self.selected_type == "mov":
-            self.webm_path = self.mov_path.replace(self.fileinfo.suffix(),"webm")
+            if qc:
+                self.qc_webm_path = self.qc_mov_path.replace(self.fileinfo.suffix(),"webm")
+            else:
+                self.webm_path = self.mov_path.replace(self.fileinfo.suffix(),"webm")
         else:
-            self.webm_path = os.path.join(os.path.abspath(
+            if qc:
+                self.qc_webm_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 qc_prefix + self.fileinfo.format("%h")+"webm")
+            else:
+                self.webm_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"webm")
+
+        if qc:
+            webm_path     = self.qc_webm_path
+            mov_path      = self.qc_mov_path
+            mov_webm_path = self.qc_mov_webm_path
+        else:
+            webm_path     = self.webm_path
+            mov_path      = self.mov_path
+            mov_webm_path = self.mov_webm_path
+
         if platform.system() == "Linux":
 
             command = ['rez-env','ffmpeg','--','ffmpeg','-y']
             command.append("-i")
-            if self.mov_webm_path :
-                command.append(self.mov_webm_path)
+            if mov_webm_path :
+                command.append( mov_webm_path )
             else:
-                command.append(self.mov_path)
+                command.append( mov_path )
             command.append("-vcodec")
             command.append("libvpx")
             command.append("-pix_fmt")
@@ -170,16 +217,16 @@ class Transcoding(object):
             command.append("42")
             command.append("-vf")
             command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
-            command.append(self.webm_path)
+            command.append(webm_path)
 
         else:
         
             command = ['rez-env','ffmpeg','--','ffmpeg','-y']
             command.append("-i")
-            if self.mov_webm_path :
-                command.append(self.mov_webm_path.replace("/","\\"))
+            if mov_webm_path :
+                command.append(mov_webm_path.replace("/","\\"))
             else:
-                command.append(self.mov_path.replace("/","\\"))
+                command.append(mov_path.replace("/","\\"))
             command.append("-vcodec")
             command.append("libvpx")
             command.append("-pix_fmt")
@@ -196,24 +243,36 @@ class Transcoding(object):
             command.append("10")
             command.append("-qmax")
             command.append("42")
-            command.append(self.webm_path.replace("/","\\"))
+            command.append(webm_path.replace("/","\\"))
 
         try:
             webm_p = subprocess.check_call(command)
         except Exception as e:
             raise Exception("make webm {}".format(e))
 
-    def create_nuke_script(self):
+    def create_nuke_script(self, qc = False ):
 
-        self.mov_webm_path = None
+        if qc:
+            self.mov_webm_path = None
+        else:
+            self.qc_mov_webm_path = None
+        qc_prefix = 'qc_' if qc else '' 
 
         if self.selected_type == "mov":
-            self.read_path = ""
-            self.mov_path = self.fileinfo.absoluteFilePath()
+            if qc:
+                self.qc_read_path = ""
+                self.qc_mov_path = self.fileinfo.absoluteFilePath()
+            else:
+                self.read_path = ""
+                self.mov_path = self.fileinfo.absoluteFilePath()
             return
         if self.selected_type == "image":
-            self.read_path = self.fileinfo.absoluteFilePath()
-            self.mov_path = self.fileinfo.absoluteFilePath()
+            if qc:
+                self.qc_read_path = self.fileinfo.absoluteFilePath()
+                self.qc_mov_path = self.fileinfo.absoluteFilePath()
+            else:
+                self.read_path = self.fileinfo.absoluteFilePath()
+                self.mov_path = self.fileinfo.absoluteFilePath()
 
             return
 
@@ -250,23 +309,48 @@ class Transcoding(object):
         setting = Output(self.output_info,shot_info)
         self.setting = setting
 
-        print "=======settting info============"
-        print self.setting.colorspace
-        print self.setting.mov_colorspace
-        print "=======settting info============"
+        print( "=======settting info============"   )
+        print( self.setting.colorspace              )
+        print( self.setting.mov_colorspace          )
+        print( "=======settting info============"   )
 
-        self.read_path = os.path.join(os.path.abspath(
+        if qc :
+            self.qc_read_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"..")),
+                                qc_prefix + self.fileinfo.format("%h%p%t"))
+        
+        
+            self.qc_mov_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 qc_prefix + self.fileinfo.format("%h")+"mov")
+
+            self.qc_tmp_nuke_script_file = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 qc_prefix + self.fileinfo.format("%h")+"py")
+        else:
+            self.read_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"..")),
                                 self.fileinfo.format("%h%p%t"))
         
         
-        self.mov_path = os.path.join(os.path.abspath(
+            self.mov_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"mov")
 
-        self.tmp_nuke_script_file = os.path.join(os.path.abspath(
+            self.tmp_nuke_script_file = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"py")
+
+        ## qc file path redefine
+        if qc:
+            read_path = self.qc_read_path
+            mov_path  = self.qc_mov_path
+            tmp_nuke_script_file = self.qc_tmp_nuke_script_file
+        else:
+            read_path = self.read_path
+            mov_path  = self.mov_path
+            tmp_nuke_script_file = self.tmp_nuke_script_file
+
 
         timecard = sum([ x['duration'] for x  in 
                     shotgun.find("TimeLog",
@@ -291,36 +375,39 @@ class Transcoding(object):
         #    nk += 'nuke.root()["OCIO_config"].setValue("aces_1.0.1")\n'
 
         if platform.system() in ('Windows',"Microsoft"):
-            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path.replace("\\","/") )
+            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format( self.read_path.replace("\\","/") )
         else:
-            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format(self.read_path )
+            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format( self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
         if self.fileinfo.tail() in ['.dpx','.exr']:
             nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
         else:
             nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
-        tg = 'read'
         
         if platform.system() in ('Windows',"Microsoft"):
-            nk += 'output = "{}"\n'.format( self.mov_path.replace("\\","/") )
+            nk += 'output = "{}"\n'.format( mov_path.replace("\\","/") )
         else:
-            nk += 'output = "{}"\n'.format( self.mov_path )
+            nk += 'output = "{}"\n'.format( mov_path )
 
         nk += 'width = int(nuke.tcl("expression {0}.width".format(read.name())))\n'
-        
 
-        #if check_tag:
-        #    nk += 'reformat = nuke.nodes.Reformat(inputs=[read],type=3,format="1920 1080 0 0 1920 1080 1",resize="height",black_outside=True)\n'
-        #    nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
+
+        if qc:
+            nk += 'qc = nuke.nodes.SQCV(name="SQCV", inputs = [read])\n'
+            nk += 'qc["which"].setValue(3)\n'
+            previous_node = 'qc'
+        else:
+            previous_node = 'read'
+
         if self.context.project['name'] in ['school','westworld']:
-            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [read])\n'
+            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
         else:
             nk += 'if width > 3000 : \n'
-            nk += '    reformat = nuke.nodes.Reformat(inputs=[read],type=2,scale=.5)\n'
+            nk += '    reformat = nuke.nodes.Reformat(inputs=[{}],type=2,scale=.5)\n'.format( previous_node )
             nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
             nk += 'else : \n'
-            nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [read])\n'
+            nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
 
         nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
         nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
@@ -350,16 +437,28 @@ class Transcoding(object):
         
 
         if not setting.mov_fps == "24":
-            self.mov_webm_path = os.path.join(os.path.abspath(
-                                    os.path.join(self.fileinfo.path(),"../..")),
-                                    self.fileinfo.format("%h").split(".")[0]+"_for_webm.mov")
+            if qc:
+                self.qc_mov_webm_path = os.path.join(os.path.abspath(
+                                        os.path.join(self.fileinfo.path(),"../..")),
+                                        qc_prefix + self.fileinfo.format("%h").split(".")[0]+"_for_webm.mov")
+            else:
+                self.mov_webm_path = os.path.join(os.path.abspath(
+                                        os.path.join(self.fileinfo.path(),"../..")),
+                                        self.fileinfo.format("%h").split(".")[0]+"_for_webm.mov")
+
+
+            if qc:
+                mov_webm_path = self.qc_mov_webm_path
+            else:
+                mov_webm_path = self.mov_webm_path
             
             
             if platform.system() in ('Windows',"Microsoft"):
-                nk += 'webm_output = "{}"\n'.format( self.mov_webm_path.replace("\\","/") )
+                nk += 'webm_output = "{}"\n'.format( mov_webm_path.replace("\\","/") )
             else:
-                nk += 'webm_output = "{}"\n'.format( self.mov_webm_path )
+                nk += 'webm_output = "{}"\n'.format( mov_webm_path )
 
+            
             nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=webm_output )\n'
             nk += 'write["file_type"].setValue( "mov" )\n'
             nk += 'write["create_directories"].setValue(True)\n'
@@ -377,35 +476,44 @@ class Transcoding(object):
 
 
         if not platform.system() in ('Windows',"Microsoft"):
-            nk += 'os.remove("{}")\n'.format(self.tmp_nuke_script_file)
+            nk += 'os.remove("{}")\n'.format( tmp_nuke_script_file)
         nk += 'exit()\n'
 
-
         
-        if not os.path.exists( os.path.dirname(self.tmp_nuke_script_file) ):
+        if not os.path.exists( os.path.dirname( tmp_nuke_script_file) ):
             cur_umask = os.umask(0)
-            os.makedirs(os.path.dirname(self.tmp_nuke_script_file),0777 )
+            os.makedirs(os.path.dirname( tmp_nuke_script_file),0777 )
             os.umask(cur_umask)
 
-        with open( self.tmp_nuke_script_file, 'w' ) as f:
+        with open( tmp_nuke_script_file, 'w' ) as f:
             f.write( nk )
-        return self.tmp_nuke_script_file
+        return tmp_nuke_script_file 
 
     
-    def create_thumbnail_for_image(self):
+    def create_thumbnail_for_image(self , qc = False ):
+        qc_prefix = 'qc_' if qc else ''
 
         if not self.selected_type == "image":
             return
 
-        self.thumbnail_file = self.fileinfo.absoluteFilePath().replace(
-            self.fileinfo.suffix(),"_thumb.jpg")
+        if qc:
+            self.qc_thumbnail_file = self.fileinfo.absoluteFilePath().replace(
+                self.fileinfo.suffix(),"qc_thumb.jpg")
+
+            thumbnail_file = self.qc_thumbnail_file
+            read_path = self.qc_read_path
+        else:
+            self.thumbnail_file = self.fileinfo.absoluteFilePath().replace(
+                self.fileinfo.suffix(),"thumb.jpg")
+            thumbnail_file = self.thumbnail_file
+            read_path = self.read_path
 
         command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
         command.append("-i")
-        command.append(self.read_path)
+        command.append(read_path)
         command.append("-f")
         command.append("image2")
-        command.append(self.thumbnail_file)
+        command.append( thumbnail_file )
 
         try:
             webm_p = subprocess.check_call(command)
@@ -430,8 +538,6 @@ class Transcoding(object):
         command.append("-v")
         command.append("quiet")
 
-        print " ".join(command)
-
         try:
             webm_p = subprocess.Popen(command,stdout=subprocess.PIPE)
             output,err = webm_p.communicate()
@@ -441,32 +547,49 @@ class Transcoding(object):
         
         
 
-    def create_thumbnail(self):
+    def create_thumbnail(self, qc = False ):
+        qc_prefix = 'qc_' if qc else ''
 
         if self.selected_type == "image":
             self.filmstream_file = ""
             return
         if self.selected_type == "mov":
             self.thumbnail_path = self.mov_path.replace(
-                self.fileinfo.suffix(),"thumb")
+                self.fileinfo.suffix(), "thumb")
         else:
             self.thumbnail_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"_thumb")
+        
+        ## qc folder 변경
+        if self.selected_type == "mov":
+            self.qc_thumbnail_path = self.qc_mov_path.replace(
+                self.fileinfo.suffix(), "qc_thumb")
+        else:
+            self.qc_thumbnail_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 qc_prefix + self.fileinfo.format("%h")+"qc_thumb")
+
+        thumbnail_path = self.qc_thumbnail_path if qc else self.thumbnail_path
 
 
-        if not os.path.exists(self.thumbnail_path ):
+        if not os.path.exists( thumbnail_path ):
             cur_umask = os.umask(0)
-            os.makedirs(self.thumbnail_path,0777 )
+            os.makedirs( thumbnail_path,0777 )
             os.umask(cur_umask)
         if self.selected_type == "mov":
-            thumb_template = os.path.join(self.thumbnail_path,
-                                      self.fileinfo.fileName()+".%04d.jpg")
+            thumb_template = os.path.join( thumbnail_path,
+                                      qc_prefix + self.fileinfo.fileName()+".%04d.jpg")
         else:
-            thumb_template = os.path.join(self.thumbnail_path,
-                                      self.fileinfo.format("%h%p")+".jpg")
+            thumb_template = os.path.join( thumbnail_path,
+                                      qc_prefix + self.fileinfo.format("%h%p")+".jpg")
 
-        select_code = self._get_mov_frame(self.mov_path)
+        ## 인스턴스 멤버변수로 사용되는 함수는 메소드 내에서 qc_prefix를 
+        ## 파일명앞에 붙여서 로컬 변수로 다시 정의 해서 사용
+        mov_path = self.qc_mov_path if qc else self.mov_path
+        
+
+        select_code = self._get_mov_frame( mov_path )
         select_code /= 30
         if select_code == 0:
             select_code = 1
@@ -475,7 +598,7 @@ class Transcoding(object):
             command.append("-r")
             command.append("24")
             command.append("-i")
-            command.append(self.mov_path)
+            command.append(mov_path)
             command.append("-vf")
             command.append("select='gte(n\,{0})*not(mod(n\,{0}))'".format(select_code))
             command.append("-vsync")
@@ -489,7 +612,7 @@ class Transcoding(object):
             command.append("-r")
             command.append("24")
             command.append("-i")
-            command.append(self.mov_path.replace("/","\\"))
+            command.append(mov_path.replace("/","\\"))
             command.append("-vf")
             command.append("select=gte(n\,{0})*not(mod(n\,{0}))".format(select_code))
             command.append("-vsync")
@@ -506,17 +629,25 @@ class Transcoding(object):
         
 
         if self.selected_type == "mov":
-            thumb_template = os.path.join(self.thumbnail_path,
-                                      self.fileinfo.fileName()+"*")
+            thumb_template = os.path.join( thumbnail_path,
+                                      qc_prefix + self.fileinfo.fileName()+"*")
         else:
-            thumb_template = os.path.join(self.thumbnail_path,
-                                      self.fileinfo.format("%h")+"*")
+            thumb_template = os.path.join( thumbnail_path,
+                                      qc_prefix + self.fileinfo.format("%h")+"*")
+
         if self.selected_type == "mov":
-            self.filmstream_file = self.mov_path.replace(self.fileinfo.suffix(),"_film-0.jpg")
+            self.filmstream_file = mov_path.replace(self.fileinfo.suffix(),"_film-0.jpg")
         else:
             self.filmstream_file = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"_film_-0.jpg")
+
+        if qc:
+            self.qc_filmstream_file = os.path.dirname( self.filmstream_file ) + os.sep + qc_prefix + os.path.basename( self.filmstream_file )
+            filmstream_file = self.qc_filmstream_file
+        else:
+            filmstream_file = self.filmstream_file
+
         if platform.system() == "Linux":
             command = ['montage']
             command.append(thumb_template)
@@ -528,7 +659,7 @@ class Transcoding(object):
             command.append("jpeg")
             command.append("-quality")
             command.append("92")
-            command.append(self.filmstream_file)
+            command.append( filmstream_file )
         else:
             command = ['magick','montage']
             command.append(thumb_template.replace("/","\\"))
@@ -540,23 +671,29 @@ class Transcoding(object):
             command.append("jpeg")
             command.append("-quality")
             command.append("92")
-            command.append(self.filmstream_file.replace("/","\\"))
+            command.append( filmstream_file.replace("/","\\"))
 
         try:
             webm_p = subprocess.check_call(command)
         except Exception as e:
             raise Exception("make montage {}".format(e))
         
-        thumbnail_files = os.listdir(self.thumbnail_path)
+        thumbnail_files = os.listdir(thumbnail_path)
         thumbnail_file = os.path.join(
-                            self.thumbnail_path,
+                            thumbnail_path,
                             thumbnail_files[len(thumbnail_files)/2]
                             )
         
-        shutil.copyfile(thumbnail_file , self.thumbnail_path+".jpg")
-        self.thumbnail_file = self.thumbnail_path + ".jpg"
+            
+        shutil.copyfile(thumbnail_file , thumbnail_path+".jpg")
+
+        if qc:
+            self.qc_thumbnail_file = thumbnail_path + ".jpg"
+        else:
+            self.thumbnail_file    = thumbnail_path + ".jpg"
+
         if platform.system() == "Linux":
-            command = ['rm','-rf',self.thumbnail_path]
+            command = ['rm','-rf', thumbnail_path]
         #else:
             #command = ['rd','/S','/Q',self.thumbnail_path.replace("/","\\")]
             try:
@@ -578,12 +715,15 @@ class UploadVersion(object):
         self.sg = self.context.sgtk.shotgun
 
 
-    def create_version(self,frame_path,mov_path,desc):
+    def create_version(self, frame_path, mov_path, desc, qc = False):
+        qc_prefix = 'qc_' if qc else ''
         
         if self.selected_type in ["mov","image"]:
             code = self.fileinfo.fileName().replace(self.fileinfo.suffix(),"")
         else:
             code = self.fileinfo.format("%h").split(".")[0]
+
+        code = qc_prefix + code
 
         data = {
             "project" : self.context.project,

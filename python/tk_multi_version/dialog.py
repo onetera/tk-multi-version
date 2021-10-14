@@ -80,12 +80,11 @@ class AppDialog(QtGui.QWidget):
             osx_f5_refresh_action.triggered.connect(self._on_refresh_triggered)
             self.addAction(osx_f5_refresh_action)
         
-        
         self.create_context_form()
         self.create_status_form()
         self.status_init = 0
         self.ui.upload_btn.clicked.connect(self._upload)
-    
+
 
     def _upload(self):
         selected_type,item = self.file_form.selected_item()
@@ -96,18 +95,31 @@ class AppDialog(QtGui.QWidget):
         trascoding = Transcoding(item,self.context,selected_type,desc)
         version = UploadVersion(item,self.context,selected_type)
         trascoding.create_nuke_script()
+        trascoding.create_nuke_script( qc = True )
+
         try:
             trascoding.create_mov()
+            trascoding.create_mov( qc = True )
             trascoding.create_mp4()
+            trascoding.create_mp4( qc = True )
             trascoding.create_webm()
+            trascoding.create_webm( qc = True )
             trascoding.create_thumbnail()
+            trascoding.create_thumbnail( qc = True )
             trascoding.create_thumbnail_for_image()
+            trascoding.create_thumbnail_for_image( qc = True )
+
             version.create_version(trascoding.read_path,trascoding.mov_path,desc)
             version.upload_thumbnail(trascoding.thumbnail_file)
             version.upload_filmstrip_thumbnail(trascoding.filmstream_file)
-            #version.upload_mov(trascoding.mov_path)
             version.upload_mp4(trascoding.mp4_path)
             version.upload_webm(trascoding.webm_path,trascoding.mov_webm_path)
+
+            version.create_version(trascoding.read_path,trascoding.qc_mov_path,desc, qc = True )
+            version.upload_thumbnail(trascoding.qc_thumbnail_file)
+            version.upload_filmstrip_thumbnail(trascoding.qc_filmstream_file)
+            version.upload_mp4(trascoding.qc_mp4_path)
+            version.upload_webm(trascoding.qc_webm_path,trascoding.qc_mov_webm_path)
         except Exception as e:
             msg = QtGui.QMessageBox()
             msg.setIcon(QtGui.QMessageBox.Critical)
