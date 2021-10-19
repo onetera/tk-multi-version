@@ -253,9 +253,9 @@ class Transcoding(object):
     def create_nuke_script(self, qc = False ):
 
         if qc:
-            self.mov_webm_path = None
-        else:
             self.qc_mov_webm_path = None
+        else:
+            self.mov_webm_path = None
         qc_prefix = 'qc_' if qc else '' 
 
         if self.selected_type == "mov":
@@ -562,15 +562,18 @@ class Transcoding(object):
                                  self.fileinfo.format("%h")+"_thumb")
         
         ## qc folder 변경
-        if self.selected_type == "mov":
-            self.qc_thumbnail_path = self.qc_mov_path.replace(
-                self.fileinfo.suffix(), "qc_thumb")
-        else:
-            self.qc_thumbnail_path = os.path.join(os.path.abspath(
-                                os.path.join(self.fileinfo.path(),"../..")),
-                                 qc_prefix + self.fileinfo.format("%h")+"qc_thumb")
+        if qc:
+            if self.selected_type == "mov":
+                self.qc_thumbnail_path = self.qc_mov_path.replace(
+                    self.fileinfo.suffix(), "qc_thumb")
+            else:
+                self.qc_thumbnail_path = os.path.join(os.path.abspath(
+                                    os.path.join(self.fileinfo.path(),"../..")),
+                                     qc_prefix + self.fileinfo.format("%h")+"qc_thumb")
 
-        thumbnail_path = self.qc_thumbnail_path if qc else self.thumbnail_path
+            thumbnail_path = self.qc_thumbnail_path 
+        else:
+            thumbnail_path = self.thumbnail_path
 
 
         if not os.path.exists( thumbnail_path ):
