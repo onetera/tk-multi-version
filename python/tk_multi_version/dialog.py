@@ -92,22 +92,17 @@ class AppDialog(QtGui.QWidget):
             return
         desc = self.ui.desc_edit.toPlainText()
 
+        qc_bool = True if self.qc_chk.isChecked() else False
+
         trascoding = Transcoding(item,self.context,selected_type,desc)
         version = UploadVersion(item,self.context,selected_type)
         trascoding.create_nuke_script()
-        trascoding.create_nuke_script( qc = True )
-
         try:
             trascoding.create_mov()
-            trascoding.create_mov( qc = True )
             trascoding.create_mp4()
-            trascoding.create_mp4( qc = True )
             trascoding.create_webm()
-            trascoding.create_webm( qc = True )
             trascoding.create_thumbnail()
-            trascoding.create_thumbnail( qc = True )
             trascoding.create_thumbnail_for_image()
-            trascoding.create_thumbnail_for_image( qc = True )
 
             version.create_version(trascoding.read_path,trascoding.mov_path,desc)
             version.upload_thumbnail(trascoding.thumbnail_file)
@@ -115,11 +110,20 @@ class AppDialog(QtGui.QWidget):
             version.upload_mp4(trascoding.mp4_path)
             version.upload_webm(trascoding.webm_path,trascoding.mov_webm_path)
 
-            version.create_version(trascoding.read_path,trascoding.qc_mov_path,desc, qc = True )
-            version.upload_thumbnail(trascoding.qc_thumbnail_file)
-            version.upload_filmstrip_thumbnail(trascoding.qc_filmstream_file)
-            version.upload_mp4(trascoding.qc_mp4_path)
-            version.upload_webm(trascoding.qc_webm_path,trascoding.qc_mov_webm_path)
+            if qc_bool:
+                trascoding.create_nuke_script( qc = qc_bool )
+                trascoding.create_mov( qc = qc_bool )
+                trascoding.create_mp4( qc = qc_bool )
+                trascoding.create_webm( qc = qc_bool )
+                trascoding.create_thumbnail( qc = qc_bool )
+                trascoding.create_thumbnail_for_image( qc = qc_bool )
+
+                version.create_version(trascoding.read_path,trascoding.qc_mov_path,desc, qc = qc_bool )
+                version.upload_thumbnail(trascoding.qc_thumbnail_file)
+                version.upload_filmstrip_thumbnail(trascoding.qc_filmstream_file)
+                version.upload_mp4(trascoding.qc_mp4_path)
+                version.upload_webm(trascoding.qc_webm_path,trascoding.qc_mov_webm_path)
+
         except Exception as e:
             msg = QtGui.QMessageBox()
             msg.setIcon(QtGui.QMessageBox.Critical)
@@ -158,6 +162,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.source_widget.addTab(self.file_form,"Select")
         self._context_widget.set_context(self.context)
         self.get_task_status()
+        self.get_comp_task4qc()
         
     
 
@@ -195,6 +200,13 @@ class AppDialog(QtGui.QWidget):
         field = 'sg_status_list'
         #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
         #entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
+        self.qc_chk = QtGui.QCheckBox( 'QC check')
+        self.qc_chk.setHidden( True )
+        sp = QtGui.QSpacerItem( 200, 10 )
+        qc_lay = QtGui.QHBoxLayout()
+        qc_lay.addWidget( self.qc_chk )
+        qc_lay.addSpacerItem( sp )
+
         try:
             field_display_name = shotgun_globals.get_field_display_name(
                 entity_type, field )
@@ -207,6 +219,10 @@ class AppDialog(QtGui.QWidget):
             form_layout.addWidget(lbl,0,0,QtCore.Qt.AlignLeft)
             form_layout.addWidget(self.editable_field_widget,0,1,QtCore.Qt.AlignRight)
             self.context_layout.addLayout(form_layout)
+            self.context_layout.addLayout( qc_lay ) 
+            bottom_sp = QtGui.QSpacerItem( 10,50 )
+            self.context_layout.addSpacerItem( bottom_sp )
+
         except :
             pass
     
@@ -216,6 +232,13 @@ class AppDialog(QtGui.QWidget):
         status = self.editable_field_widget.get_value()
         data = {'sg_status_list': status}
         self._app.shotgun.update('Task',self.context.task['id'],data)
+
+    def get_comp_task4qc( self ):
+        if self.context.step['name'] == 'comp':
+            self.qc_chk.setHidden( False )
+        else:
+            self.qc_chk.setChecked( False )
+            self.qc_chk.setHidden( True )
 
 
     def get_task_status(self):
