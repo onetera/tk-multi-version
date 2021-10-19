@@ -201,6 +201,7 @@ class AppDialog(QtGui.QWidget):
         #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
         #entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
         self.qc_chk = QtGui.QCheckBox( 'QC check')
+        self.qc_chk.setChecked( False )
         self.qc_chk.setHidden( True )
         sp = QtGui.QSpacerItem( 200, 10 )
         qc_lay = QtGui.QHBoxLayout()
