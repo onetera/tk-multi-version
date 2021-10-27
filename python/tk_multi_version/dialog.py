@@ -104,12 +104,6 @@ class AppDialog(QtGui.QWidget):
             trascoding.create_thumbnail()
             trascoding.create_thumbnail_for_image()
 
-            version.create_version(trascoding.read_path,trascoding.mov_path,desc)
-            version.upload_thumbnail(trascoding.thumbnail_file)
-            version.upload_filmstrip_thumbnail(trascoding.filmstream_file)
-            version.upload_mp4(trascoding.mp4_path)
-            version.upload_webm(trascoding.webm_path,trascoding.mov_webm_path)
-
             if qc_bool:
                 trascoding.create_nuke_script( qc = qc_bool )
                 trascoding.create_mov( qc = qc_bool )
@@ -123,6 +117,12 @@ class AppDialog(QtGui.QWidget):
                 version.upload_filmstrip_thumbnail(trascoding.qc_filmstream_file)
                 version.upload_mp4(trascoding.qc_mp4_path)
                 version.upload_webm(trascoding.qc_webm_path,trascoding.qc_mov_webm_path)
+
+            version.create_version(trascoding.read_path,trascoding.mov_path,desc)
+            version.upload_thumbnail(trascoding.thumbnail_file)
+            version.upload_filmstrip_thumbnail(trascoding.filmstream_file)
+            version.upload_mp4(trascoding.mp4_path)
+            version.upload_webm(trascoding.webm_path,trascoding.mov_webm_path)
 
         except Exception as e:
             msg = QtGui.QMessageBox()
