@@ -153,9 +153,15 @@ class AppDialog(QtGui.QWidget):
             self.ui.source_widget.removeTab(index)
 
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
-        
+        print self.context.filesystem_locations
+        print self.context.filesystem_locations
+        print self.context.filesystem_locations
+        print self.context.filesystem_locations
+
+        root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
+
         init_path = os.path.join(
-            self.context.filesystem_locations[0],
+            root_path[0],
             self.context.step['name'])
 
         self.file_form = FilesForm(init_path)
