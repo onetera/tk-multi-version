@@ -14,7 +14,8 @@ codecs = {
     "Apple ProRes 422":"apcn",
     "Apple ProRes 422 LT":"apcs",
     "Apple ProRes 422 Proxy":"apco",
-    "Avid DNxHD Codec":"AVdn"}
+    "Avid DNxHD 444": "AVdn",
+    "Avid DNxHD 422":"AVdn"}
 
 class Output(object):
     
@@ -26,6 +27,13 @@ class Output(object):
         self._set_file_type(info['sg_out_format'])
         self._set_colorspace(info['sg_colorspace'],info)
         self.mov_codec = codecs[info['sg_mov_codec']]
+        if info['sg_mov_codec'] == "Avid DNxHD 444":
+            self.dnxhd_profile = 'DNxHD 444 10-bit 440Mbit'
+        
+        elif info['sg_mov_codec'] == "Avid DNxHD 422":
+            self.dnxhd_profile = 'DNxHD 422 10-bit 220Mbit'
+        else:
+            self.dnxhd_profile = ''
 
     def _set_file_type(self,text):
         
@@ -422,6 +430,8 @@ class Transcoding(object):
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
         nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+        if self.setting.dnxhd_profile:
+            nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
         #nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
         if self.context.project['name'] in ['voice4', 'robin', 'westworld']:
             nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
@@ -463,6 +473,9 @@ class Transcoding(object):
             nk += 'write["file_type"].setValue( "mov" )\n'
             nk += 'write["create_directories"].setValue(True)\n'
             nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+            if self.setting.dnxhd_profile:
+                nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
+
             if self.context.project['name'] in ['voice4','robin', 'westworld']:
                 nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
             else:
