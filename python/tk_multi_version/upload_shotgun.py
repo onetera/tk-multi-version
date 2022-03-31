@@ -735,7 +735,8 @@ class UploadVersion(object):
         qc_prefix = 'qc_' if qc else ''
         
         if self.selected_type in ["mov","image"]:
-            code = self.fileinfo.fileName().replace(self.fileinfo.suffix(),"")
+            # code = self.fileinfo.fileName().replace(self.fileinfo.suffix(),"")
+            code = self.fileinfo.fileName()
         else:
             code = self.fileinfo.format("%h").split(".")[0]
 

@@ -34,8 +34,6 @@ class MyTaskItemDelegate(WidgetDelegate):
         self._paint_widget = None
         self._widget_sz = None
 
-    # ------------------------------------------------------------------------------------------------------
-    # ------------------------------------------------------------------------------------------------------
     def _get_painter_widget(self, model_index, parent):
         """
         """
