@@ -13,34 +13,40 @@ import os
 import re
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+from pprint import pprint
 
 from ..ui.files_widget import Ui_FilesWidget
 from ..ext_packages import pyseq
 
+# exr 과 같은 seq가 들어왔을 때 SeqItem의 인스턴스 생성
 class SeqItem(QtGui.QStandardItem):
     
-    def __init__(self,seq_info,parent=None):
+    def __init__(self,seq_info, context_name = None, parent=None):
 
         QtGui.QStandardItem.__init__(self,parent)
         self.seq_info = seq_info
-        self.setText(seq_info.format())
-    
+        if context_name:
+            self.setText( "SHOT [" + context_name + "] - " + seq_info.format() )
+        else:
+            self.setText( seq_info.format() )
 
 
-
+class VideoItem(QtGui.QStandardItem):
+    def __init__( self, video_info, context_name = None, parent = None ):
+        QtGui.QStandardItem.__init__(self,parent)
+        self.video_info = video_info
+        if context_name:
+            self.setText( "SHOT [" +  context_name + "] - " + video_info )
+        else:
+            self.setText( context_name )
 
 
 
 class FilesForm(QtGui.QWidget):
-
-
     def __init__(self,root_path,parent=None):
-
-        
         self.root_path = root_path
         QtGui.QWidget.__init__(self, parent)
         self.sequence_list = []
-
         self.image_filters = ["*.jpg",
                               "*.jpeg",
                               "*.png",
@@ -55,7 +61,8 @@ class FilesForm(QtGui.QWidget):
                               "*.dpx",
                               "*.mov",
                               "*.ogv",
-                              "*.mp4"]
+                              "*.mp4"
+                              ]
 
         self.dir_model = QtGui.QFileSystemModel()
         self.file_model = QtGui.QFileSystemModel()
@@ -93,6 +100,8 @@ class FilesForm(QtGui.QWidget):
     def setup_connections(self):
         """ Sets up input connections from different parts of the interface, to the appropriate methods. """
         self.ui.dir_view.clicked.connect(self.update_from_tree_click)
+        # self.ui.file_view.doubleClicked.connect( self.update_from_list_click )
+        # self.ui.sel_file_view.doubleClicked.connect( self.update_from_sel_list_click)
         #self.ui.file_view.clicked.connect(self.update_from_list_click)
         #self.text_edit.editingFinished.connect(self.update_from_text_entry)
         #self.up_button.clicked.connect(self.up_directory)
@@ -109,9 +118,9 @@ class FilesForm(QtGui.QWidget):
             self.ui.file_view.setRootIndex(self.file_model.index(self.dir_model.filePath(self.ui.dir_view.selectedIndexes()[0])))
         except:
             pass
+    
 
-
-    def scan_folder_sequences(self):
+    def scan_folder_list(self):
 
         """ Returns a list of lists. filtered is a list of only the sequences in the specified path, first_last is
          a list of individual frames of the sequence. """
@@ -123,7 +132,7 @@ class FilesForm(QtGui.QWidget):
 
     def string_list_refresh(self):
         """ Refresh the StringListModel. """
-        sequence_list = self.scan_folder_sequences()
+        sequence_list = self.scan_folder_list()
         if sequence_list :
             self.seq_model = QtGui.QStandardItemModel()
             for i in sequence_list:
@@ -131,19 +140,19 @@ class FilesForm(QtGui.QWidget):
         else:
             self.seq_model = None
 
-    def selected_item(self):
-        index = self.ui.file_view.selectedIndexes()
-        if not index:
-            return 
-        model = self.ui.file_view.model()
-        if isinstance(model, QtGui.QFileSystemModel):
-            item = model.fileInfo(index[0])
-            if "*."+item.suffix().lower() in self.image_filters:
-                if item.suffix() in ["mov","ogv","mp4"]:
-                    return "mov",item
-                else:
-                    return "image",item
-            else:
-                return
-        elif isinstance(model, QtGui.QStandardItemModel):
-            return "seq",model.itemFromIndex(index[0])
+    # def selected_item(self):
+    #     index = self.ui.file_view.selectedIndexes()
+    #     if not index:
+    #         return 
+    #     model = self.ui.file_view.model()
+    #     if isinstance(model, QtGui.QFileSystemModel):
+    #         item = model.fileInfo(index[0])
+    #         if "*."+item.suffix().lower() in self.image_filters:
+    #             if item.suffix() in ["mov","ogv","mp4"]:
+    #                 return "mov",item
+    #             else:
+    #                 return "image",item
+    #         else:
+    #             return
+    #     elif isinstance(model, QtGui.QStandardItemModel):
+    #         return "seq",model.itemFromIndex(index[0])
