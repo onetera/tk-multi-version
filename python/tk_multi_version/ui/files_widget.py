@@ -30,8 +30,6 @@ class Ui_FilesWidget(object):
         self.file_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.file_view.setObjectName("file_view")
         self.horizontalLayout.addWidget(self.file_view)
-<<<<<<< HEAD
-=======
 
         self.verticalLayout.addLayout(self.horizontalLayout)
         
@@ -43,15 +41,7 @@ class Ui_FilesWidget(object):
         # self.sel_file_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         # self.sel_file_view.setObjectName( "sel_file_view" )
         # self.verticalLayout.addLayout(self.selectedLayout)
->>>>>>> test
 
-        self.verticalLayout.addLayout(self.horizontalLayout)
-#-----------------------------------------------------------------------------#
-        self.sel_file_view = QtGui.QListView( FilesWidget )
-        self.sel_file_view.setObjectName( "sel_file_view" )
-        self.sel_file_view.resize( 200, 50 )
-        self.verticalLayout.addWidget( self.sel_file_view )
-#-----------------------------------------------------------------------------#
         self.retranslateUi(FilesWidget)
         QtCore.QMetaObject.connectSlotsByName(FilesWidget)
 

@@ -171,7 +171,7 @@ class AppDialog(QtGui.QWidget):
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
 
         init_path = os.path.join(
-            root_path[0],
+            self.context.filesystem_locations[0],
             self.context.step['name'])
 
         self.file_form = FilesForm(init_path)
