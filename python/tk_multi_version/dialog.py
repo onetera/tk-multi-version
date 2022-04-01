@@ -169,7 +169,11 @@ class AppDialog(QtGui.QWidget):
             self.ui.source_widget.removeTab(index)
 
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
-
+        root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
+        
+        # print(dir(self.context))
+        print(self.context.filesystem_locations)
+        # print(root_path)
         init_path = os.path.join(
             self.context.filesystem_locations[0],
             self.context.step['name'])
@@ -177,10 +181,10 @@ class AppDialog(QtGui.QWidget):
         self.file_form = FilesForm(init_path)
         self.ui.source_widget.addTab(self.file_form,"Select")
         self._context_widget.set_context(self.context)
+        self.file_form.ui.file_view.doubleClicked.connect( self.update_from_list_click )
         self.get_task_status()
         self.get_comp_task4qc()
         
-        self.file_form.ui.file_view.doubleClicked.connect( self.update_from_list_click )
 
     def create_context_form(self):
 
@@ -274,7 +278,8 @@ class AppDialog(QtGui.QWidget):
         fields = sorted(self._app.shotgun.schema_field_read(entity_type).keys())
         #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
         entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
-        self.editable_field_widget.set_value(entity['sg_status_list'])
+        if self.editable_field_widget:
+            self.editable_field_widget.set_value(entity['sg_status_list'])
 
     def closeEvent(self, event):
         """
