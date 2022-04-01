@@ -127,7 +127,6 @@ class FilesForm(QtGui.QWidget):
         file_path = self.dir_model.filePath(self.ui.dir_view.selectedIndexes()[0])
         sequences = [x for x in pyseq.get_sequences(file_path)
                      if x.tail() in ['.jpg','.exr','.dpx','.tiff','.jpg','.jpeg','.png'] ]
-
         return sequences
 
     def string_list_refresh(self):

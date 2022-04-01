@@ -171,12 +171,43 @@ class AppDialog(QtGui.QWidget):
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
         root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
         
-        # print(dir(self.context))
-        print(self.context.filesystem_locations)
-        # print(root_path)
-        init_path = os.path.join(
-            self.context.filesystem_locations[0],
-            self.context.step['name'])
+        print(root_path)
+        
+        if not root_path:
+            entity_type = "Task"
+            entity_query = [['entity','is',self.context.entity],
+                            ['id','is',self.context.task['id']]]
+            fields = sorted(self._app.shotgun.schema_field_read(entity_type).keys())
+            # entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields) 
+            entity = self._app.shotgun.find_one(entity_type, entity_query, ['entity']) 
+
+            # pprint(entity) #{'entity': {'id': 8462, 'name': 'audiR8', 'type': 'Asset'},'id': 91767,'type': 'Task'}
+            # print(self.context.entity) # {'type': 'Asset', 'name': 'audiR8', 'id': 8462}
+            # pprint(dir(entity))
+            # print(entity['type']) # Task
+            if self.context.entity['type'] == 'Asset':
+            # if self.context.entity == 'Asset':
+                entity_type = 'Asset'
+                entity_query = [['code','is',self.context.entity['name']],
+                                ['id','is',self.context.entity['id']]]
+                # print(entity_query) # [['code', 'is', 'audiR8'], ['id', 'is', 8462]]
+                asset = self._app.shotgun.find_one( entity_type , entity_query, ['sg_asset_type','code'] ) 
+                # print(asset) # {'sg_asset_type': 'vehicle', 'type': 'Asset', 'id': 8462}
+                init_path = os.path.join(
+                    self._app.sgtk.project_path,
+                    "assets",
+                    asset['sg_asset_type'],
+                    asset['code']
+                )
+                print(init_path) 
+                
+
+        else:
+            init_path = os.path.join(
+                # self.context.filesystem_locations[0],
+                root_path[0],
+                self.context.step['name']
+                )
 
         self.file_form = FilesForm(init_path)
         self.ui.source_widget.addTab(self.file_form,"Select")
