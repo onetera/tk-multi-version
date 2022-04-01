@@ -278,8 +278,7 @@ class AppDialog(QtGui.QWidget):
         fields = sorted(self._app.shotgun.schema_field_read(entity_type).keys())
         #entities = self._app.shotgun.find(entity_type, entity_query, fields=fields)
         entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields)
-        if self.editable_field_widget:
-            self.editable_field_widget.set_value(entity['sg_status_list'])
+        self.editable_field_widget.set_value(entity['sg_status_list'])
 
     def closeEvent(self, event):
         """
