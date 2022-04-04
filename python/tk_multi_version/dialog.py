@@ -16,7 +16,7 @@ import traceback
 
 from .my_tasks.my_tasks_form import MyTasksForm
 from .my_tasks.my_tasks_model import MyTasksModel
-from .files_widget.files_form import FilesForm, VideoItem, SeqItem
+from .files_widget.files_form import FilesForm, VideoItem, SeqItem, ImageItem
 from .util import monitor_qobject_lifetime
 # from .ui.selected_files_widget import Ui_SelectedFilesWidget
 # by importing QT from sgtk rather than directly, we ensure that
@@ -408,12 +408,14 @@ class AppDialog(QtGui.QWidget):
         model = self.file_form.ui.file_view.model()
         item = model.fileInfo(index[0])
         item_name = model.fileName( index[0] )
-        if item.suffix() in ["mov","ogv","mp4"]:
-            if not item_name in self.selected_file_dict:
-                self.selected_file_model.appendRow( VideoItem( item_name, self.context.entity['name'] ) ) # make filesystemitem -> standarditem
-                self.selected_file_dict[ item_name ] = [ item, self.context ]
-            else: 
-                pass
+        if not item_name in self.selected_file_dict:
+            if "*."+item.suffix().lower() in self.file_form.image_filters:
+                if item.suffix() in ["mov","ogv","mp4"]:
+                    self.selected_file_model.appendRow( VideoItem( item_name, self.context.entity['name'] ) ) # make filesystemitem -> standarditem
+                    self.selected_file_dict[ item_name ] = [ item, self.context ]
+                else: 
+                    self.selected_file_model.appendRow( ImageItem( item_name, self.context.entity['name']) )
+                    self.selected_file_dict[ item_name ] = [ item, self.context ]
 
     def add_selected_seq_refresh( self ):
         index = self.file_form.ui.file_view.selectedIndexes( )
@@ -442,7 +444,7 @@ class AppDialog(QtGui.QWidget):
                 self.selected_file_model.removeRow( index[0].row() )            
             elif isinstance( item, SeqItem ) and item.seq_info in self.selected_file_dict:
                 del self.selected_file_dict[ item.seq_info ]
-                self.selected_file_model.removeRow( index[0].row() )        
+                self.selected_file_model.removeRow( index[0].row() )  
 
     def selected_item( self ):
         selected_item_list = []

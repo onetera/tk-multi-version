@@ -26,7 +26,7 @@ class SeqItem(QtGui.QStandardItem):
         QtGui.QStandardItem.__init__(self,parent)
         self.seq_info = seq_info
         if context_name:
-            self.setText( "SHOT [" + context_name + "] - " + seq_info.format() )
+            self.setText( "[" + context_name + "] - " + seq_info.format() )
         else:
             self.setText( seq_info.format() )
 
@@ -36,11 +36,18 @@ class VideoItem(QtGui.QStandardItem):
         QtGui.QStandardItem.__init__(self,parent)
         self.video_info = video_info
         if context_name:
-            self.setText( "SHOT [" +  context_name + "] - " + video_info )
+            self.setText( "[" +  context_name + "] - " + video_info )
         else:
-            self.setText( context_name )
+            self.setText( video_info )
 
-
+class ImageItem(QtGui.QStandardItem):
+    def __init__( self, image_info, context_name = None, parent = None ):
+        QtGui.QStandardItem.__init__(self,parent)
+        self.image_info = image_info
+        if context_name:
+            self.setText( "[" +  context_name + "] - " + image_info )
+        else:
+            self.setText( image_info )
 
 class FilesForm(QtGui.QWidget):
     def __init__(self,root_path,parent=None):
