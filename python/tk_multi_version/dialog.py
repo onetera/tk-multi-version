@@ -445,6 +445,9 @@ class AppDialog(QtGui.QWidget):
             elif isinstance( item, SeqItem ) and item.seq_info in self.selected_file_dict:
                 del self.selected_file_dict[ item.seq_info ]
                 self.selected_file_model.removeRow( index[0].row() )  
+            elif isinstance( item, ImageItem ) and item.image_info in self.selected_file_dict:
+                del self.selected_file_dict[ item.image_info ]
+                self.selected_file_model.removeRow( index[0].row() )  
 
     def selected_item( self ):
         selected_item_list = []
