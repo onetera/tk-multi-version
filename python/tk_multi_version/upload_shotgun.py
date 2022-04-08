@@ -26,7 +26,7 @@ class Output(object):
         self.shot_info = shot_info
         self._set_file_type(info['sg_out_format'])
         self._set_colorspace(info['sg_colorspace'],info)
-        self.mov_codec = codecs["Apple ProRes 422 Proxy"]
+        self.mov_codec = codecs["Apple ProRes 422 HQ"]
         # self.mov_codec = codecs[info['sg_mov_codec']]
         if info['sg_mov_codec'] == "Avid DNxHD 444":
             self.dnxhd_profile = 'DNxHD 444 10-bit 440Mbit'
