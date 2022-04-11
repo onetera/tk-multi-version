@@ -172,6 +172,7 @@ class AppDialog(QtGui.QWidget):
         root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
         
         print(root_path)
+        init_path = " "
         
         if not root_path:
             entity_type = "Task"
@@ -183,10 +184,7 @@ class AppDialog(QtGui.QWidget):
 
             # pprint(entity) #{'entity': {'id': 8462, 'name': 'audiR8', 'type': 'Asset'},'id': 91767,'type': 'Task'}
             # print(self.context.entity) # {'type': 'Asset', 'name': 'audiR8', 'id': 8462}
-            # pprint(dir(entity))
-            # print(entity['type']) # Task
             if self.context.entity['type'] == 'Asset':
-            # if self.context.entity == 'Asset':
                 entity_type = 'Asset'
                 entity_query = [['code','is',self.context.entity['name']],
                                 ['id','is',self.context.entity['id']]]
@@ -199,8 +197,17 @@ class AppDialog(QtGui.QWidget):
                     asset['sg_asset_type'],
                     asset['code']
                 )
-                print(init_path) 
-                
+            else :
+                entity_type = 'Shot'
+                entity_query = [['code','is',self.context.entity['name']],
+                                ['id','is',self.context.entity['id']]]
+                shot = self._app.shotgun.find_one( entity_type , entity_query, ['sg_sequence','code'] ) 
+                init_path = os.path.join(
+                    self._app.sgtk.project_path,
+                    "seq",
+                    shot['sg_sequence']['name'],
+                    shot['code']
+                )
 
         else:
             init_path = os.path.join(
