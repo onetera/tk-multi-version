@@ -64,6 +64,8 @@ class AppDialog(QtGui.QWidget):
 
         self.selected_file_dict  = {}
         self.selected_file_model = QtGui.QStandardItemModel()
+        self.desc_edit_tab = QtGui.QTextEdit()
+        self.desc_edit_layout = QtGui.QVBoxLayout()
         # selected_files = QtCore.Signal( object, object )
         # selected_items = QtCore.Signal( object, object )
 
@@ -92,16 +94,17 @@ class AppDialog(QtGui.QWidget):
         # self.create_selectedList_form()
         self.status_init = 0
         self.ui.upload_btn.clicked.connect(self._upload)
+        self.selected_file_view.clicked.connect( self.update_from_selected_list_click )
 
 
     def _upload(self):
         selected_item_list = self.selected_item()
         if not selected_item_list:
             return
-        for selected_type, item, context in selected_item_list:
+        for selected_type, item, context, desc in selected_item_list:
             if not item:
                 return
-            desc = self.ui.desc_edit.toPlainText()
+            # desc = self.ui.desc_widget.toPlainText()
 
             qc_bool = True if self.qc_chk.isChecked() else False
 
@@ -384,7 +387,7 @@ class AppDialog(QtGui.QWidget):
         model.async_refresh()
         logger.debug("Tasks Model Build Finished")
         return model
- 
+
     def _on_refresh_triggered(self):
         """
         Slot triggered when a refresh is requested via the refresh keyboard shortcut
@@ -407,6 +410,61 @@ class AppDialog(QtGui.QWidget):
         else :
             pass
         self.selected_file_view.setModel( self.selected_file_model )
+        print(self.selected_file_view.model().rowCount())
+        row_count = self.selected_file_view.model().rowCount()
+        # if row_count == 0 :
+        added_item_index = self.selected_file_model.index( row_count, 0 )
+        self.selected_file_index = added_item_index
+        
+            # selected = QtCore.QItemSelectionModel()
+            # item_rect = self.selected_file_view.visualRect( self.selected_file_index )
+            # self.selected_file_view.setSelection( item_rect )
+
+    def update_from_selected_list_click( self ):
+        description = self.desc_edit_tab.toPlainText( )
+        index = self.selected_file_view.selectedIndexes( )[0]
+        if not index:
+            return
+
+        model = self.selected_file_view.model()
+        previous_item = model.itemFromIndex( self.selected_file_index )
+
+        if isinstance( previous_item, VideoItem ) and previous_item.video_info in self.selected_file_dict:
+            self.selected_file_dict[ previous_item.video_info ][2]  = description
+            # self.desc_edit_tab.setPlainText(description)
+        elif isinstance( previous_item, SeqItem ) and previous_item.seq_info in self.selected_file_dict:
+            self.selected_file_dict[ previous_item.seq_info ][2]    = description
+            # self.desc_edit_tab.setPlainText(description)            
+        elif isinstance( previous_item, ImageItem ) and previous_item.image_info in self.selected_file_dict:
+            self.selected_file_dict[ previous_item.image_info ][2]  = description
+            # self.desc_edit_tab.setPlainText(description)          
+
+        item    = model.itemFromIndex( index )
+        item_name = model.itemFromIndex( index ).text()
+        # print('click!')
+        print(item_name)
+
+        # item_name = model.fileName( index[0] )
+        count = self.ui.desc_widget.count()
+        for tab_index in range(0,count):
+            widget = self.ui.desc_widget.widget( tab_index )
+            widget.close()
+            self.ui.desc_widget.removeTab( tab_index )
+
+        if isinstance( item, VideoItem ) and item.video_info in self.selected_file_dict:
+            description = self.selected_file_dict[ item.video_info ][2]
+            self.desc_edit_tab.setPlainText( description )
+        elif isinstance( item, SeqItem ) and item.seq_info in self.selected_file_dict:
+            description = self.selected_file_dict[ item.seq_info ][2]
+            self.desc_edit_tab.setPlainText( description )            
+        elif isinstance( item, ImageItem ) and item.image_info in self.selected_file_dict:
+            description = self.selected_file_dict[ item.image_info ][2]
+            self.desc_edit_tab.setPlainText( description )    
+        print(description)
+
+        self.desc_edit_tab.setLayout(self.desc_edit_layout)
+        self.ui.desc_widget.addTab( self.desc_edit_tab, "Description" )
+        self.selected_file_index = index
 
     def add_selected_mov_refresh( self ):
         index = self.file_form.ui.file_view.selectedIndexes( )
@@ -419,10 +477,10 @@ class AppDialog(QtGui.QWidget):
             if "*."+item.suffix().lower() in self.file_form.image_filters:
                 if item.suffix() in ["mov","ogv","mp4"]:
                     self.selected_file_model.appendRow( VideoItem( item_name, self.context.entity['name'] ) ) # make filesystemitem -> standarditem
-                    self.selected_file_dict[ item_name ] = [ item, self.context ]
+                    self.selected_file_dict[ item_name ] = [ item, self.context, ""]
                 else: 
                     self.selected_file_model.appendRow( ImageItem( item_name, self.context.entity['name']) )
-                    self.selected_file_dict[ item_name ] = [ item, self.context ]
+                    self.selected_file_dict[ item_name ] = [ item, self.context, "" ]
 
     def add_selected_seq_refresh( self ):
         index = self.file_form.ui.file_view.selectedIndexes( )
@@ -433,11 +491,11 @@ class AppDialog(QtGui.QWidget):
         item_name = item.text()
         if not item_name in self.selected_file_dict:
             self.selected_file_model.appendRow( SeqItem( item_name, self.context.entity['name'] ) )
-            self.selected_file_dict[ item_name ] = [ item, self.context ]
+            self.selected_file_dict[ item_name ] = [ item, self.context, "" ]
         else:
             pass        
 
-    def update_from_selected_list_click( self ):
+    def update_from_selected_list_delete( self ):
         self.delete_selected_list_refresh()
         self.selected_file_view.setModel( self.selected_file_model )
 
@@ -454,22 +512,25 @@ class AppDialog(QtGui.QWidget):
                 self.selected_file_model.removeRow( index[0].row() )  
             elif isinstance( item, ImageItem ) and item.image_info in self.selected_file_dict:
                 del self.selected_file_dict[ item.image_info ]
-                self.selected_file_model.removeRow( index[0].row() )  
+                self.selected_file_model.removeRow( index[0].row() ) 
+        
 
+
+    
     def selected_item( self ):
         selected_item_list = []
         if not self.selected_file_dict:
             return
-        for item, item_context in self.selected_file_dict.values():
+        for item, item_context, desc in self.selected_file_dict.values():
             if isinstance( item, SeqItem ):
-                selected_item_list.append([ "seq", item, item_context ])
+                selected_item_list.append([ "seq", item, item_context, desc ])
             elif "*."+item.suffix().lower() in self.file_form.image_filters:
                 if item.suffix() in ["mov","ogv","mp4"]:
-                    selected_item_list.append([ "mov", item, item_context ])
+                    selected_item_list.append([ "mov", item, item_context, desc ])
                 else:
-                    selected_item_list.append([ "image", item, item_context ])
+                    selected_item_list.append([ "image", item, item_context, desc ])
         return selected_item_list
 
     def keyPressEvent( self, e ):
         if e.key() == QtGui.QKeySequence('Delete'):
-            self.update_from_selected_list_click()
+            self.update_from_selected_list_delete()

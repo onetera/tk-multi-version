@@ -100,9 +100,15 @@ class Ui_Dialog(object):
         self.label = QtGui.QLabel(Dialog)
         self.label.setObjectName("label")
         self.verticalLayout.addWidget(self.label)
-        self.desc_edit = QtGui.QTextEdit(Dialog)
-        self.desc_edit.setObjectName("desc_edit")
-        self.verticalLayout.addWidget(self.desc_edit)
+
+
+        #-------------------------------------------------#
+        # self.desc_edit = QtGui.QTextEdit(Dialog)
+        self.desc_widget = QtGui.QTabWidget( Dialog )
+        self.desc_widget.setFont(font)
+        self.desc_widget.setObjectName("desc_edit")
+        self.verticalLayout.addWidget(self.desc_widget)
+        #-------------------------------------------------#
 
         self.horizontalLayout_3.addLayout(self.verticalLayout)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
@@ -129,7 +135,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "The Current Sgtk Environment", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("Dialog", "Description", None, QtGui.QApplication.UnicodeUTF8))
+        # self.label.setText(QtGui.QApplication.translate("Dialog", "Description", None, QtGui.QApplication.UnicodeUTF8))
         self.upload_btn.setText(QtGui.QApplication.translate("Dialog", "Upload", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc
