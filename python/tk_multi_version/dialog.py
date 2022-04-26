@@ -232,8 +232,6 @@ class AppDialog(QtGui.QWidget):
         self._context_widget = context_selector.ContextWidget(self)
         self._context_widget.set_up(self._task_manager)
         self._context_widget.setFixedWidth(550)
-        #self._context_widget.setFixedHeight(200)
-        #self._context_widget.resize(600,200)
         self._context_widget.enable_editing(True,"Select Task")
         self._context_widget.restrict_entity_types_by_link(
             "PublishedFile", "entity")
@@ -410,15 +408,11 @@ class AppDialog(QtGui.QWidget):
         else :
             pass
         self.selected_file_view.setModel( self.selected_file_model )
-        print(self.selected_file_view.model().rowCount())
+        # print(self.selected_file_view.model().rowCount())
         row_count = self.selected_file_view.model().rowCount()
-        # if row_count == 0 :
         added_item_index = self.selected_file_model.index( row_count, 0 )
-        self.selected_file_index = added_item_index
-        
-            # selected = QtCore.QItemSelectionModel()
-            # item_rect = self.selected_file_view.visualRect( self.selected_file_index )
-            # self.selected_file_view.setSelection( item_rect )
+        if row_count == 1 :
+            self.selected_file_index = added_item_index
 
     def update_from_selected_list_click( self ):
         description = self.desc_edit_tab.toPlainText( )
@@ -431,20 +425,15 @@ class AppDialog(QtGui.QWidget):
 
         if isinstance( previous_item, VideoItem ) and previous_item.video_info in self.selected_file_dict:
             self.selected_file_dict[ previous_item.video_info ][2]  = description
-            # self.desc_edit_tab.setPlainText(description)
         elif isinstance( previous_item, SeqItem ) and previous_item.seq_info in self.selected_file_dict:
             self.selected_file_dict[ previous_item.seq_info ][2]    = description
-            # self.desc_edit_tab.setPlainText(description)            
         elif isinstance( previous_item, ImageItem ) and previous_item.image_info in self.selected_file_dict:
             self.selected_file_dict[ previous_item.image_info ][2]  = description
-            # self.desc_edit_tab.setPlainText(description)          
 
         item    = model.itemFromIndex( index )
         item_name = model.itemFromIndex( index ).text()
-        # print('click!')
         print(item_name)
 
-        # item_name = model.fileName( index[0] )
         count = self.ui.desc_widget.count()
         for tab_index in range(0,count):
             widget = self.ui.desc_widget.widget( tab_index )
@@ -461,7 +450,6 @@ class AppDialog(QtGui.QWidget):
             description = self.selected_file_dict[ item.image_info ][2]
             self.desc_edit_tab.setPlainText( description )    
         print(description)
-
         self.desc_edit_tab.setLayout(self.desc_edit_layout)
         self.ui.desc_widget.addTab( self.desc_edit_tab, "Description" )
         self.selected_file_index = index
@@ -513,10 +501,8 @@ class AppDialog(QtGui.QWidget):
             elif isinstance( item, ImageItem ) and item.image_info in self.selected_file_dict:
                 del self.selected_file_dict[ item.image_info ]
                 self.selected_file_model.removeRow( index[0].row() ) 
-        
+        self.ui.desc_widget.removeTab( 0 )
 
-
-    
     def selected_item( self ):
         selected_item_list = []
         if not self.selected_file_dict:
@@ -532,5 +518,10 @@ class AppDialog(QtGui.QWidget):
         return selected_item_list
 
     def keyPressEvent( self, e ):
+        print(e.key())
         if e.key() == QtGui.QKeySequence('Delete'):
             self.update_from_selected_list_delete()
+        elif e.key() == QtGui.QKeySequence('Key_Up'):
+            pass
+        # else:
+        #     pass

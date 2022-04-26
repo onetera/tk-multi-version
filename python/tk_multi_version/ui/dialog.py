@@ -95,22 +95,19 @@ class Ui_Dialog(object):
         self.context_widget.setObjectName("context_widget")
         self.horizontalLayout_3.addWidget(self.context_widget)
 
-        self.verticalLayout = QtGui.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.label = QtGui.QLabel(Dialog)
-        self.label.setObjectName("label")
-        self.verticalLayout.addWidget(self.label)
+        # self.verticalLayout = QtGui.QVBoxLayout()
+        # self.verticalLayout.setObjectName("verticalLayout")
+        # self.label = QtGui.QLabel(Dialog)
+        # self.label.setObjectName("label")
+        # self.verticalLayout.addWidget(self.label)
 
-
-        #-------------------------------------------------#
-        # self.desc_edit = QtGui.QTextEdit(Dialog)
         self.desc_widget = QtGui.QTabWidget( Dialog )
+        self.desc_widget.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.desc_widget.setFont(font)
         self.desc_widget.setObjectName("desc_edit")
-        self.verticalLayout.addWidget(self.desc_widget)
-        #-------------------------------------------------#
+        self.horizontalLayout_3.addWidget(self.desc_widget)
 
-        self.horizontalLayout_3.addLayout(self.verticalLayout)
+        # self.horizontalLayout_3.addLayout(self.verticalLayout)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
 
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
