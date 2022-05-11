@@ -25,10 +25,10 @@ class SeqItem(QtGui.QStandardItem):
 
         QtGui.QStandardItem.__init__(self,parent)
         self.name_info = name_info
-        # if context_name:
-        #     self.setText( "[" + context_name + "] - " + name_info.format() )
-        # else:
-        #     self.setText( name_info.format() )
+        if context_name:
+            self.setText( "[" + context_name + "] - " + name_info.format() )
+        else:
+            self.setText( name_info.format() )
         
 
 
