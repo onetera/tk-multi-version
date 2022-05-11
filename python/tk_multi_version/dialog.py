@@ -16,8 +16,9 @@ import traceback
 
 from .my_tasks.my_tasks_form import MyTasksForm
 from .my_tasks.my_tasks_model import MyTasksModel
-from .files_widget.files_form import FilesForm, VideoItem, SeqItem, ImageItem
+from .files_widget.files_form import FilesForm, SeqItem
 from .util import monitor_qobject_lifetime
+from .ui.selected_files_widget import Ui_SelectedFilesWidget
 # from .ui.selected_files_widget import Ui_SelectedFilesWidget
 # by importing QT from sgtk rather than directly, we ensure that
 # the code will be compatible with both PySide and PyQt.
@@ -63,11 +64,9 @@ class AppDialog(QtGui.QWidget):
         self._task_manager.start_processing()
 
         self.selected_file_dict  = {}
-        self.selected_file_model = QtGui.QStandardItemModel()
-        self.desc_edit_tab = QtGui.QTextEdit()
-        self.desc_edit_layout = QtGui.QVBoxLayout()
-        # selected_files = QtCore.Signal( object, object )
-        # selected_items = QtCore.Signal( object, object )
+        # self.selected_file_model = QtGui.QStandardItemModel()
+        # self.desc_edit_tab = QtGui.QTextEdit()
+        # self.desc_edit_layout = QtGui.QVBoxLayout()
 
         # lastly, set up our very basic UI
         self.user = sgtk.util.get_current_user(self._app.sgtk)
@@ -90,15 +89,14 @@ class AppDialog(QtGui.QWidget):
         
         self.create_context_form()
         self.create_status_form()
-        self.create_selected_list_form()
-        # self.create_selectedList_form()
+        self.create_selected_ui()
         self.status_init = 0
+        self.ui.delete_btn.clicked.connect(self.delete_selected_item)
         self.ui.upload_btn.clicked.connect(self._upload)
-        self.selected_file_view.clicked.connect( self.update_from_selected_list_click )
-
+        self.selected_ui.widget.clicked.connect( self.update_from_selected_ui_click )
 
     def _upload(self):
-        selected_item_list = self.selected_item()
+        selected_item_list = self.get_selected_item_list()
         if not selected_item_list:
             return
         for selected_type, item, context, desc in selected_item_list:
@@ -164,7 +162,6 @@ class AppDialog(QtGui.QWidget):
         msg.exec_()
         
     def create_file_form(self,selection_detail,breadcrumb_trail):
-        
         count = self.ui.source_widget.count()
         for index in range(0,count):
             widget = self.ui.source_widget.widget(index)
@@ -172,11 +169,10 @@ class AppDialog(QtGui.QWidget):
             self.ui.source_widget.removeTab(index)
 
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
+        pprint(self.context)
         root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
-        
         print(root_path)
         init_path = " "
-        
         if not root_path:
             entity_type = "Task"
             entity_query = [['entity','is',self.context.entity],
@@ -184,9 +180,6 @@ class AppDialog(QtGui.QWidget):
             fields = sorted(self._app.shotgun.schema_field_read(entity_type).keys())
             # entity = self._app.shotgun.find_one(entity_type, entity_query, fields=fields) 
             entity = self._app.shotgun.find_one(entity_type, entity_query, ['entity']) 
-
-            # pprint(entity) #{'entity': {'id': 8462, 'name': 'audiR8', 'type': 'Asset'},'id': 91767,'type': 'Task'}
-            # print(self.context.entity) # {'type': 'Asset', 'name': 'audiR8', 'id': 8462}
             if self.context.entity['type'] == 'Asset':
                 entity_type = 'Asset'
                 entity_query = [['code','is',self.context.entity['name']],
@@ -211,27 +204,23 @@ class AppDialog(QtGui.QWidget):
                     shot['sg_sequence']['name'],
                     shot['code']
                 )
-
         else:
             init_path = os.path.join(
                 # self.context.filesystem_locations[0],
                 root_path[0],
-                self.context.step['name']
+                self.context.task['name']
                 )
-
         self.file_form = FilesForm(init_path)
         self.ui.source_widget.addTab(self.file_form,"Select")
         self._context_widget.set_context(self.context)
         self.file_form.ui.file_view.doubleClicked.connect( self.update_from_list_click )
         self.get_task_status()
         self.get_comp_task4qc()
-        
 
     def create_context_form(self):
-
         self._context_widget = context_selector.ContextWidget(self)
         self._context_widget.set_up(self._task_manager)
-        self._context_widget.setFixedWidth(550)
+        self._context_widget.setFixedWidth(450)
         self._context_widget.enable_editing(True,"Select Task")
         self._context_widget.restrict_entity_types_by_link(
             "PublishedFile", "entity")
@@ -244,16 +233,17 @@ class AppDialog(QtGui.QWidget):
         self.context_tab.setLayout(self.context_layout)
         self.ui.context_widget.addTab(self.context_tab,"Context")
 
-    def create_selected_list_form( self ):
-        self.selected_list_layout = QtGui.QVBoxLayout()
-        self.selected_list_tab = QtGui.QWidget()
-        self.selected_list_tab.setLayout(self.selected_list_layout)
-        self.selected_file_view = QtGui.QListView()      
-        self.selected_file_view.setEditTriggers( QtGui.QAbstractItemView.NoEditTriggers )
-        self.selected_file_view.setObjectName( "selected_file_view" )
-        # self.ui.selected_file_widget.addWidget( self.selected_file_view )
-        self.selected_list_layout.addWidget( self.selected_file_view )
-        self.ui.selected_file_widget.addTab( self.selected_list_tab, "Upload Lists" )
+    def create_selected_ui( self ):
+        self.selected_ui = Ui_SelectedFilesWidget()
+        self.selected_ui.setupUi( self )
+        self.ui.selected_file_widget.addTab( self.selected_ui.widget, "Upload Lists" )
+        # self.selected_ui.widget.resizeColumnToContents( 0 )
+        # self.selected_ui.widget.columnResuzed( 0, 1, 200 )
+        
+        # self._selected_file_widget = QtGui.QTableWidget()
+        # self._selected_file_widget.setColumnCount(2)
+        # self._selected_file_widget.insertRow(10)
+        # self.selected_ui.selected_file_view.setModel( self.selected_file_model )
 
 
     def create_status_form(self):
@@ -309,7 +299,6 @@ class AppDialog(QtGui.QWidget):
             self.qc_chk.setChecked( False )
             self.qc_chk.setHidden( True )
 
-
     def get_task_status(self):
         entity_type = "Task"
         entity_query = [["entity",'is',self.context.entity],
@@ -326,10 +315,8 @@ class AppDialog(QtGui.QWidget):
         need to be called here.
         """
         logger.debug("CloseEvent Received. Begin shutting down UI.")
-
         # register the data fetcher with the global schema manager
         shotgun_globals.unregister_bg_task_manager(self._task_manager)
-
         try:
             if self._my_tasks_model:
                 self._my_tasks_model.destroy()
@@ -356,7 +343,6 @@ class AppDialog(QtGui.QWidget):
         except Exception as e:
             logger.exception("Failed to Load my tasks, because %s \n %s"
                              % (e, traceback.format_exc()))
-
 
 
     def _build_my_tasks_model(self, project):
@@ -398,61 +384,86 @@ class AppDialog(QtGui.QWidget):
         # if self._facility_tasks_model:
         #     self._facility_tasks_model.async_refresh()
 
-
     def update_from_list_click( self ):
         model = self.file_form.ui.file_view.model()
         if isinstance( model, QtGui.QFileSystemModel ):
-            self.add_selected_mov_refresh()
+            item_name = self.add_selected_mov_refresh()
         elif isinstance( model, QtGui.QStandardItemModel ):
-            self.add_selected_seq_refresh( )
+            item_name = self.add_selected_seq_refresh( )
         else :
-            pass
-        self.selected_file_view.setModel( self.selected_file_model )
-        # print(self.selected_file_view.model().rowCount())
-        row_count = self.selected_file_view.model().rowCount()
-        added_item_index = self.selected_file_model.index( row_count, 0 )
-        if row_count == 1 :
-            self.selected_file_index = added_item_index
-
-    def update_from_selected_list_click( self ):
-        description = self.desc_edit_tab.toPlainText( )
-        index = self.selected_file_view.selectedIndexes( )[0]
-        if not index:
             return
+        if not item_name:
+            return
+        row_count = self.selected_ui.widget.rowCount()
+        print(row_count)
+        self.selected_ui.widget.insertRow( row_count )
+        self.selected_ui.widget.setItem( row_count, 0, QtGui.QTableWidgetItem( self.context.entity['name'] ) )
+        self.selected_ui.widget.setItem( row_count, 1, QtGui.QTableWidgetItem( item_name ) )
+        # self.selected_ui.widget.resizeRowsToContents( )
+        desc_editor = QtGui.QPlainTextEdit()
+        # desc_editor.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        desc_editor.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        # desc_editor.clear()
+        desc_editor.setFrameStyle( QtGui.QFrame.NoFrame )
+        self.resize_height_toContents(desc_editor)
+        self.selected_ui.widget.setCellWidget( row_count, 2, desc_editor )
+        self.selected_ui.widget.resizeColumnToContents( 0 )
+        self.selected_ui.widget.resizeColumnToContents( 1 )
+        desc_editor.textChanged.connect( lambda : self.resize_height_toContents(desc_editor) )
 
-        model = self.selected_file_view.model()
-        previous_item = model.itemFromIndex( self.selected_file_index )
+        # desc_editor = Ui_DescriptionWidget()
+        # desc_editor.setSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.MinimumExpanding)
+        # desc_editor.value_changed.connect(self.desc_text_change(desc_editor))
+        # pprint(self.selected_file_dict)
+        
 
-        if isinstance( previous_item, VideoItem ) and previous_item.video_info in self.selected_file_dict:
-            self.selected_file_dict[ previous_item.video_info ][2]  = description
-        elif isinstance( previous_item, SeqItem ) and previous_item.seq_info in self.selected_file_dict:
-            self.selected_file_dict[ previous_item.seq_info ][2]    = description
-        elif isinstance( previous_item, ImageItem ) and previous_item.image_info in self.selected_file_dict:
-            self.selected_file_dict[ previous_item.image_info ][2]  = description
+        # self.selected_ui.selected_file_view.setModel( self.selected_file_model )
+        # # print(self.selected_file_view.model().rowCount())
+        # row_count = self.selected_ui.selected_file_view.model().rowCount()
+        # added_item_index = self.selected_file_model.index( row_count, 0 )
+        # if row_count == 1 :
+        #     self.selected_file_index = added_item_index
 
-        item    = model.itemFromIndex( index )
-        item_name = model.itemFromIndex( index ).text()
-        print(item_name)
+    def update_from_selected_ui_click( self ):
+        # self.resize_height_toContents()
+        row = self.selected_ui.widget.currentIndex().row()
+        column = self.selected_ui.widget.currentIndex().column()
+        print( row, column )
+        
+        item = self.selected_ui.widget.selectedItems()
+        if not item :
+            return
+        print(item[0])
+        if column != 2:
+            item[0].setFlags( QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
+            self.selected_ui.widget.selectRow( row )
 
-        count = self.ui.desc_widget.count()
-        for tab_index in range(0,count):
-            widget = self.ui.desc_widget.widget( tab_index )
-            widget.close()
-            self.ui.desc_widget.removeTab( tab_index )
+        # else:
+        # self.selected_ui.widget.verticalHeader().resizeSections( QtGui.QHeaderView.ResizeToContents  )
 
-        if isinstance( item, VideoItem ) and item.video_info in self.selected_file_dict:
-            description = self.selected_file_dict[ item.video_info ][2]
-            self.desc_edit_tab.setPlainText( description )
-        elif isinstance( item, SeqItem ) and item.seq_info in self.selected_file_dict:
-            description = self.selected_file_dict[ item.seq_info ][2]
-            self.desc_edit_tab.setPlainText( description )            
-        elif isinstance( item, ImageItem ) and item.image_info in self.selected_file_dict:
-            description = self.selected_file_dict[ item.image_info ][2]
-            self.desc_edit_tab.setPlainText( description )    
-        print(description)
-        self.desc_edit_tab.setLayout(self.desc_edit_layout)
-        self.ui.desc_widget.addTab( self.desc_edit_tab, "Description" )
-        self.selected_file_index = index
+
+        # description = self.desc_edit_tab.toPlainText( )
+        # index = self.selected_file_view.selectedIndexes( )[0]
+        # if not index:
+        #     return
+        # model = self.selected_file_view.model()
+        # previous_item = model.itemFromIndex( self.selected_file_index )
+        # if isinstance( previous_item, QtGui.QStandardItem ) and previous_item.name_info in self.selected_file_dict:
+        #     self.selected_file_dict[ previous_item.name_info ][2]  = description
+        # item    = model.itemFromIndex( index )
+        # item_name = model.itemFromIndex( index ).text()
+        # print(item_name)
+        # count = self.ui.desc_widget.count()
+        # for tab_index in range(0,count):
+        #     widget = self.ui.desc_widget.widget( tab_index )
+        #     widget.close()
+        #     self.ui.desc_widget.removeTab( tab_index )
+        # if isinstance( item, QtGui.QStandardItem ) and item.name_info in self.selected_file_dict:
+        #     description = self.selected_file_dict[ item.name_info ][2]
+        # print(description)
+        # self.desc_edit_tab.setLayout(self.desc_edit_layout)
+        # self.ui.desc_widget.addTab( self.desc_edit_tab, "Description" )
+        # self.selected_file_index = index
 
     def add_selected_mov_refresh( self ):
         index = self.file_form.ui.file_view.selectedIndexes( )
@@ -464,11 +475,13 @@ class AppDialog(QtGui.QWidget):
         if not item_name in self.selected_file_dict:
             if "*."+item.suffix().lower() in self.file_form.image_filters:
                 if item.suffix() in ["mov","ogv","mp4"]:
-                    self.selected_file_model.appendRow( VideoItem( item_name, self.context.entity['name'] ) ) # make filesystemitem -> standarditem
-                    self.selected_file_dict[ item_name ] = [ item, self.context, ""]
+                    # self.selected_file_model.appendRow( VideoItem( item_name, self.context.entity['name'] ) ) # make filesystemitem -> standarditem
+                    self.selected_file_dict[ item_name ] = [ item, self.context ]
                 else: 
-                    self.selected_file_model.appendRow( ImageItem( item_name, self.context.entity['name']) )
-                    self.selected_file_dict[ item_name ] = [ item, self.context, "" ]
+                    # self.selected_file_model.appendRow( ImageItem( item_name, self.context.entity['name']) )
+                    self.selected_file_dict[ item_name ] = [ item, self.context ]
+                return item_name
+        return None
 
     def add_selected_seq_refresh( self ):
         index = self.file_form.ui.file_view.selectedIndexes( )
@@ -478,36 +491,42 @@ class AppDialog(QtGui.QWidget):
         item = model.itemFromIndex( index[0] )
         item_name = item.text()
         if not item_name in self.selected_file_dict:
-            self.selected_file_model.appendRow( SeqItem( item_name, self.context.entity['name'] ) )
-            self.selected_file_dict[ item_name ] = [ item, self.context, "" ]
-        else:
-            pass        
+            # self.selected_file_model.appendRow( SeqItem( item_name, self.context.entity['name'] ) )
+            self.selected_file_dict[ item_name ] = [ item, self.context ]      
+            return item_name
+        return None
 
-    def update_from_selected_list_delete( self ):
-        self.delete_selected_list_refresh()
-        self.selected_file_view.setModel( self.selected_file_model )
+    def delete_selected_item( self ):
+        item_list = self.selected_ui.widget.selectedItems()
+        for item in item_list:
+            # pprint( self.selected_ui.widget.indexFromItem(i) )
+            if item.column() == 1:
+                print(item.text())
+                del self.selected_file_dict[ item.text() ]
+                self.selected_ui.widget.removeRow( item.row() )
 
-    def delete_selected_list_refresh( self ):
-        model  = self.selected_file_view.model()
-        index  = self.selected_file_view.selectedIndexes()
-        if index:
-            item   = model.itemFromIndex( index[0] )
-            if isinstance( item, VideoItem ) and item.video_info in self.selected_file_dict:
-                del self.selected_file_dict[ item.video_info ]
-                self.selected_file_model.removeRow( index[0].row() )            
-            elif isinstance( item, SeqItem ) and item.seq_info in self.selected_file_dict:
-                del self.selected_file_dict[ item.seq_info ]
-                self.selected_file_model.removeRow( index[0].row() )  
-            elif isinstance( item, ImageItem ) and item.image_info in self.selected_file_dict:
-                del self.selected_file_dict[ item.image_info ]
-                self.selected_file_model.removeRow( index[0].row() ) 
-        self.ui.desc_widget.removeTab( 0 )
+    # def update_from_selected_list_delete( self ):
+        # self.delete_selected_list_refresh()
+        # self.selected_ui.selected_file_view.setModel( self.selected_file_model )
 
-    def selected_item( self ):
+    # def delete_selected_list_refresh( self ):
+    #     model  = self.selected_ui.selected_file_view.model()
+    #     index  = self.selected_ui.selected_file_view.selectedIndexes()
+    #     if index:
+    #         item   = model.itemFromIndex( index[0] )
+    #         if isinstance( item, QtGui.QStandardItem ) and item.name_info in self.selected_file_dict:
+    #             del self.selected_file_dict[ item.name_info ]
+    #             self.selected_file_model.removeRow( index[0].row() ) 
+
+    def get_selected_item_list( self ):
         selected_item_list = []
+        desc=""
         if not self.selected_file_dict:
             return
-        for item, item_context, desc in self.selected_file_dict.values():
+        for item, item_context in self.selected_file_dict.values():
+            selected_item = self.selected_ui.widget.findItems(item.fileName(), QtCore.Qt.MatchExactly)
+            row = selected_item[0].row()
+            desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
             if isinstance( item, SeqItem ):
                 selected_item_list.append([ "seq", item, item_context, desc ])
             elif "*."+item.suffix().lower() in self.file_form.image_filters:
@@ -517,11 +536,10 @@ class AppDialog(QtGui.QWidget):
                     selected_item_list.append([ "image", item, item_context, desc ])
         return selected_item_list
 
-    def keyPressEvent( self, e ):
-        print(e.key())
-        if e.key() == QtGui.QKeySequence('Delete'):
-            self.update_from_selected_list_delete()
-        elif e.key() == QtGui.QKeySequence('Key_Up'):
-            pass
-        # else:
-        #     pass
+
+    def resize_height_toContents( self, desc_editor ):
+        row_count  = desc_editor.blockCount()
+        font = QtGui.QFontMetrics(desc_editor.font())
+        height = font.height()
+        desc_editor.setFixedHeight( row_count * height + 8 )
+        self.selected_ui.widget.resizeRowsToContents( )
