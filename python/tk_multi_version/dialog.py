@@ -166,7 +166,7 @@ class AppDialog(QtGui.QWidget):
             self.ui.source_widget.removeTab(index)
 
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
-        pprint(self.context)
+        # pprint(self.context)
         root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
         print(root_path)
         init_path = " "
@@ -377,13 +377,14 @@ class AppDialog(QtGui.QWidget):
         if isinstance( model, QtGui.QFileSystemModel ):
             item_name = self.add_selected_mov_refresh()
         elif isinstance( model, QtGui.QStandardItemModel ):
-            item_name = self.add_selected_seq_refresh( )
+            item = self.add_selected_seq_refresh( )
+            item_name = item.text()
         else :
             return
         if not item_name:
             return
         row_count = self.selected_ui.widget.rowCount()
-        print(row_count)
+        # print(row_count)
         self.selected_ui.widget.insertRow( row_count )
         self.selected_ui.widget.setItem( row_count, 0, QtGui.QTableWidgetItem( self.context.entity['name'] ) )
         self.selected_ui.widget.setItem( row_count, 1, QtGui.QTableWidgetItem( item_name ) )
@@ -403,12 +404,12 @@ class AppDialog(QtGui.QWidget):
     def update_from_selected_ui_click( self ):
         row = self.selected_ui.widget.currentIndex().row()
         column = self.selected_ui.widget.currentIndex().column()
-        print( row, column )
+        # print( row, column )
         
         item = self.selected_ui.widget.selectedItems()
         if not item :
             return
-        print(item[0])
+        # print(item[0])
         if column != 2:
             item[0].setFlags( QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
             self.selected_ui.widget.selectRow( row )
@@ -438,8 +439,9 @@ class AppDialog(QtGui.QWidget):
         item = model.itemFromIndex( index[0] )
         item_name = item.text()
         if not item_name in self.selected_file_dict:
-            self.selected_file_dict[ item_name ] = [ item, self.context ]      
-            return item_name
+            seq_item = SeqItem( item.seq_info )
+            self.selected_file_dict[ item_name ] = [ seq_item, self.context ]      
+            return seq_item
         return None
 
     def delete_selected_item( self ):
@@ -448,6 +450,9 @@ class AppDialog(QtGui.QWidget):
             if item.column() == 1:
                 print(item.text())
                 del self.selected_file_dict[ item.text() ]
+                # print('*'*100)
+                # print(self.selected_file_dict.keys())
+                # print('*'*100)
                 self.selected_ui.widget.removeRow( item.row() )
 
 
@@ -456,13 +461,21 @@ class AppDialog(QtGui.QWidget):
         desc=""
         if not self.selected_file_dict:
             return
+        # print(self.selected_file_dict.keys())
         for item, item_context in self.selected_file_dict.values():
-            selected_item = self.selected_ui.widget.findItems(item.fileName(), QtCore.Qt.MatchExactly)
-            row = selected_item[0].row()
-            desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
+            # selected_item = self.selected_ui.widget.findItems(item.fileName(), QtCore.Qt.MatchExactly)
+            # row = selected_item[0].row()
+            # desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
             if isinstance( item, SeqItem ):
+                print(item.text())
+                selected_item = self.selected_ui.widget.findItems(item.text(), QtCore.Qt.MatchExactly)
+                row = selected_item[0].row()
+                desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
                 selected_item_list.append([ "seq", item, item_context, desc ])
             elif "*."+item.suffix().lower() in self.file_form.image_filters:
+                selected_item = self.selected_ui.widget.findItems(item.fileName(), QtCore.Qt.MatchExactly)
+                row = selected_item[0].row()
+                desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
                 if item.suffix() in ["mov","ogv","mp4"]:
                     selected_item_list.append([ "mov", item, item_context, desc ])
                 else:
