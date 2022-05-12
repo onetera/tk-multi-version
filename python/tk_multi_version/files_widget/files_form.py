@@ -21,14 +21,15 @@ from ..ext_packages import pyseq
 # exr 과 같은 seq가 들어왔을 때 SeqItem의 인스턴스 생성
 class SeqItem(QtGui.QStandardItem):
     
-    def __init__(self,name_info, context_name = None, parent=None):
+    def __init__(self, seq_info, context_name = None, parent=None):
 
         QtGui.QStandardItem.__init__(self,parent)
-        self.name_info = name_info
-        if context_name:
-            self.setText( "[" + context_name + "] - " + name_info.format() )
-        else:
-            self.setText( name_info.format() )
+        self.seq_info = seq_info
+        # if context_name:
+        #     self.setText( "[" + context_name + "] - " + seq_info.format() )
+        # else:
+        #     self.setText( seq_info.format() )
+        self.setText( seq_info.format() )
         
 
 
