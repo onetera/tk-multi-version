@@ -168,6 +168,7 @@ class AppDialog(QtGui.QWidget):
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
         # pprint(self.context)
         root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
+        print 'root_path',
         print(root_path)
         init_path = " "
         if not root_path:
@@ -205,8 +206,9 @@ class AppDialog(QtGui.QWidget):
             init_path = os.path.join(
                 # self.context.filesystem_locations[0],
                 root_path[0],
-                self.context.task['name']
+                self.context.step['name']
                 )
+            print(init_path)
         self.file_form = FilesForm(init_path)
         self.ui.source_widget.addTab(self.file_form,"Select")
         self._context_widget.set_context(self.context)
