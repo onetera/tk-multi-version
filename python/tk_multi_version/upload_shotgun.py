@@ -66,10 +66,13 @@ class Output(object):
                 shot_colorspace = self.shot_info['sg_colorspace']
                 #if not shot_colorspace.find("ACES") == -1 :
                 #    shot_colorspace = "ACES - %s"%shot_colorspace
-
-                if not self.colorspace == shot_colorspace:
+                if not text.find("ACES") == -1 and\
+                    shot_colorspace == 'rec709':
+                    self.colorspace = 'Output - Rec.709'
+                elif not self.colorspace == shot_colorspace:
                     self.colorspace = shot_colorspace
                     self.mov_colorspace = shot_colorspace
+
 
 class Transcoding(object):
 
