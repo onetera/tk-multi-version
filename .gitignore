@@ -39,3 +39,6 @@ Thumbs.db
 test.py
 test*.py
 draganddroptest
+
+# log
+*log

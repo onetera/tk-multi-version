@@ -7,6 +7,7 @@ import subprocess
 from .ext_packages import pyseq
 import shutil
 
+import logging
 
 codecs = {
     "Apple ProRes 4444":"ap4h",
@@ -109,9 +110,96 @@ class Transcoding(object):
 
 
         try:
+            print(command)
             mov_p = subprocess.check_call(command)
         except Exception as e:
             raise Exception("make mov {}".format(e))
+
+    def create_hdr_mov( self, qc = False ):
+        if self.selected_type == "image" or self.selected_type == "mov":
+            return
+        if self.setting.colorspace.find('ACES') == -1:
+            return
+
+        hdr_nuke_script = self.create_hdr_nuke_script( qc )
+        nuke_ver = 'nuke-13' if qc else 'nuke-11'
+        command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
+        command.append( hdr_nuke_script )
+        
+        try:
+            hdr_p = subprocess.check_call(command)
+        except Exception as e:
+            raise Exception("make hdr mov {}".format(e))
+    
+    def create_hdr_nuke_script( self, qc = False ):
+        Log_Format = "%(levelname)s %(asctime)s - %(message)s"
+        logging.basicConfig(filename = "/netgear/user/pipeline/kyoungmin/work/toolkit/tk-multi-version/log_HDR.log",
+                    filemode = "a",
+                    format = Log_Format, 
+                    level = logging.INFO)
+
+        logger = logging.getLogger()
+        if qc:
+            tmp_hdr_nuke_script_file = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 self.fileinfo.format("%h")+ "hdr" + ".py")
+        else:
+            tmp_hdr_nuke_script_file = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 self.fileinfo.format("%h")+ "hdr" + ".py")
+        qc_prefix = 'qc_' if qc else '' 
+        print( "=======HDR settting info============"   )
+        print(    "color space : ACES - ACES2065-1"     )
+        print(   "mov color space : Outpuy - Rec.709"   )
+        print(   "mov codec : Apple ProRes 4444 "   )
+        print( "=======HDR settting info============"   )
+        if qc :
+            hdr_path = self.qc_hdr_path
+        else :
+            hdr_path = self.hdr_path
+
+        logger.info( '[PATH] : ' + hdr_path )
+
+        nk = ''
+        nk += '#-*- coding: utf-8 -*-\n'
+        nk += 'import nuke\n'
+        nk += 'import os\n'
+        nk += 'nuke.knob("root.first_frame", "{}" )\n'.format(self.fileinfo.start())
+        nk += 'nuke.knob("root.last_frame", "{}" )\n'.format(self.fileinfo.end() )
+
+        if platform.system() in ('Windows',"Microsoft"):
+            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format( self.read_path.replace("\\","/") )
+        else:
+            nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format( self.read_path )
+        nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
+        nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
+        nk += 'read["colorspace"].setValue( "{}")\n'.format("ACES - ACES2065-1")
+        if platform.system() in ('Windows',"Microsoft"):
+            nk += 'output = "{}"\n'.format( self.hdr_path.replace("\\","/") )
+        else:
+            nk += 'output = "{}"\n'.format( self.hdr_path )
+            
+        nk += 'write = nuke.nodes.Write(name="hdr_write", inputs = [read],file=output )\n'
+        nk += 'write["file_type"].setValue( "mov" )\n'
+        nk += 'write["create_directories"].setValue(True)\n'
+        nk += 'write["mov64_codec"].setValue("{}")\n'.format("ap4h")
+        nk += 'write["mov64_fps"].setValue({})\n'.format(self.setting.mov_fps)
+        nk += 'write["colorspace"].setValue( "{}")\n'.format("Output - Rec.709")
+        nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
+                                                     self.fileinfo.end())
+        if not platform.system() in ('Windows',"Microsoft"):
+            nk += 'os.remove("{}")\n'.format( tmp_hdr_nuke_script_file )
+        nk += 'exit()\n'
+
+        if not os.path.exists( os.path.dirname( tmp_hdr_nuke_script_file) ):
+            cur_umask = os.umask(0)
+            os.makedirs(os.path.dirname( tmp_hdr_nuke_script_file),0777 )
+            os.umask(cur_umask)
+
+        with open( tmp_hdr_nuke_script_file, 'w' ) as f:
+            f.write( nk )
+        return tmp_hdr_nuke_script_file 
+
 
     def create_mp4(self, qc = False ):
         qc_prefix = 'qc_' if qc else '' 
@@ -336,6 +424,10 @@ class Transcoding(object):
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  qc_prefix + self.fileinfo.format("%h")+"mov")
 
+            self.qc_hdr_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 qc_prefix + self.fileinfo.format("%h") + "hdr" + ".mov")
+
             self.qc_tmp_nuke_script_file = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  qc_prefix + self.fileinfo.format("%h")+"py")
@@ -344,10 +436,13 @@ class Transcoding(object):
                                 os.path.join(self.fileinfo.path(),"..")),
                                 self.fileinfo.format("%h%p%t"))
         
-        
             self.mov_path = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
                                  self.fileinfo.format("%h")+"mov")
+
+            self.hdr_path = os.path.join(os.path.abspath(
+                                os.path.join(self.fileinfo.path(),"../..")),
+                                 self.fileinfo.format("%h") + "hdr" + ".mov")
 
             self.tmp_nuke_script_file = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
@@ -357,10 +452,12 @@ class Transcoding(object):
         if qc:
             read_path = self.qc_read_path
             mov_path  = self.qc_mov_path
+            hdr_path  = self.qc_hdr_path
             tmp_nuke_script_file = self.qc_tmp_nuke_script_file
         else:
             read_path = self.read_path
             mov_path  = self.mov_path
+            hdr_path  = self.hdr_path
             tmp_nuke_script_file = self.tmp_nuke_script_file
 
 
@@ -735,7 +832,7 @@ class UploadVersion(object):
         self.sg = self.context.sgtk.shotgun
 
 
-    def create_version(self, frame_path, mov_path, desc, qc = False):
+    def create_version(self, frame_path, mov_path, desc, hdr_path, qc = False):
         qc_prefix = 'qc_' if qc else ''
         
         if self.selected_type in ["mov","image"]:
@@ -754,6 +851,7 @@ class UploadVersion(object):
             "sg_version_type" : "review",
             "sg_path_to_movie" :mov_path,
             "sg_path_to_frames" :frame_path,
+            "sg_path_to_hdr" : hdr_path,
             "sg_first_frame" :1,
             "description" :desc
         }
@@ -770,6 +868,7 @@ class UploadVersion(object):
             data = {
             "sg_path_to_movie" :mov_path,
             "sg_path_to_frames" :frame_path,
+            "sg_path_to_hdr" : hdr_path,
             "description" :desc
                 }
             self.sg.update("Version",self.version['id'],data)

@@ -110,6 +110,7 @@ class AppDialog(QtGui.QWidget):
             trascoding.create_nuke_script()
             try:
                 trascoding.create_mov()
+                trascoding.create_hdr_mov()
                 trascoding.create_mp4()
                 trascoding.create_webm()
                 trascoding.create_thumbnail()
@@ -118,18 +119,19 @@ class AppDialog(QtGui.QWidget):
                 if qc_bool:
                     trascoding.create_nuke_script( qc = qc_bool )
                     trascoding.create_mov( qc = qc_bool )
+                    trascoding.create_hdr_mov( qc = qc_bool )
                     trascoding.create_mp4( qc = qc_bool )
                     trascoding.create_webm( qc = qc_bool )
                     trascoding.create_thumbnail( qc = qc_bool )
                     trascoding.create_thumbnail_for_image( qc = qc_bool )
 
-                    version.create_version(trascoding.read_path,trascoding.qc_mov_path,desc, qc = qc_bool )
+                    version.create_version(trascoding.read_path,trascoding.qc_mov_path,desc,trascoding.qc_hdr_path, qc = qc_bool )
                     version.upload_thumbnail(trascoding.qc_thumbnail_file)
                     version.upload_filmstrip_thumbnail(trascoding.qc_filmstream_file)
                     version.upload_mp4(trascoding.qc_mp4_path)
                     version.upload_webm(trascoding.qc_webm_path,trascoding.qc_mov_webm_path)
 
-                version.create_version(trascoding.read_path,trascoding.mov_path,desc)
+                version.create_version(trascoding.read_path,trascoding.mov_path,desc,trascoding.hdr_path)
                 version.upload_thumbnail(trascoding.thumbnail_file)
                 version.upload_filmstrip_thumbnail(trascoding.filmstream_file)
                 version.upload_mp4(trascoding.mp4_path)
