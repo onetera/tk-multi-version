@@ -116,12 +116,12 @@ class Transcoding(object):
             raise Exception("make mov {}".format(e))
 
     def create_hdr_mov( self, qc = False ):
+        hdr_nuke_script = self.create_hdr_nuke_script( qc )
         if self.selected_type == "image" or self.selected_type == "mov":
             return
         if self.setting.colorspace.find('ACES') == -1:
             return
 
-        hdr_nuke_script = self.create_hdr_nuke_script( qc )
         nuke_ver = 'nuke-13' if qc else 'nuke-11'
         command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
         command.append( hdr_nuke_script )
@@ -150,7 +150,7 @@ class Transcoding(object):
         qc_prefix = 'qc_' if qc else '' 
         print( "=======HDR settting info============"   )
         print(    "color space : ACES - ACES2065-1"     )
-        print(   "mov color space : Outpuy - Rec.709"   )
+        print(   "mov color space : Output - Rec.709"   )
         print(   "mov codec : Apple ProRes 4444 "   )
         print( "=======HDR settting info============"   )
         if qc :
@@ -362,16 +362,20 @@ class Transcoding(object):
             if qc:
                 self.qc_read_path = ""
                 self.qc_mov_path = self.fileinfo.absoluteFilePath()
+                self.qc_hdr_path = ""
             else:
                 self.read_path = ""
+                self.hdr_path = ""
                 self.mov_path = self.fileinfo.absoluteFilePath()
             return
         if self.selected_type == "image":
             if qc:
                 self.qc_read_path = self.fileinfo.absoluteFilePath()
+                self.qc_hdr_path = ""
                 self.qc_mov_path = self.fileinfo.absoluteFilePath()
             else:
                 self.read_path = self.fileinfo.absoluteFilePath()
+                self.hdr_path = ""
                 self.mov_path = self.fileinfo.absoluteFilePath()
 
             return
