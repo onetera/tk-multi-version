@@ -116,11 +116,11 @@ class Transcoding(object):
             raise Exception("make mov {}".format(e))
 
     def create_hdr_mov( self, qc = False ):
-        hdr_nuke_script = self.create_hdr_nuke_script( qc )
         if self.selected_type == "image" or self.selected_type == "mov":
             return
         if self.setting.colorspace.find('ACES') == -1:
             return
+        hdr_nuke_script = self.create_hdr_nuke_script( qc )
 
         nuke_ver = 'nuke-13' if qc else 'nuke-11'
         command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
