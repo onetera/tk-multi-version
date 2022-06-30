@@ -95,7 +95,7 @@ class Transcoding(object):
             return
         if self.selected_type == "mov":
             return
-        nuke_ver = 'nuke-13' if qc else 'nuke-11'
+        nuke_ver = 'nuke-13' if qc else 'nuke-12'
         command = ['rez-env', nuke_ver,'--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver ,'ocio_config','--','nuke','-ix']
@@ -122,7 +122,7 @@ class Transcoding(object):
             return
         hdr_nuke_script = self.create_hdr_nuke_script( qc )
 
-        nuke_ver = 'nuke-13' if qc else 'nuke-11'
+        nuke_ver = 'nuke-13' if qc else 'nuke-12'
         command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
         command.append( hdr_nuke_script )
         
