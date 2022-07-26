@@ -2,10 +2,12 @@
 
 import sgtk
 import os
+import sys
 import platform
 import subprocess
 from .ext_packages import pyseq
 import shutil
+import datetime
 
 import logging
 
@@ -132,13 +134,6 @@ class Transcoding(object):
             raise Exception("make hdr mov {}".format(e))
     
     def create_hdr_nuke_script( self, qc = False ):
-        Log_Format = "%(levelname)s %(asctime)s - %(message)s"
-        logging.basicConfig(filename = "/netgear/user/pipeline/kyoungmin/work/toolkit/tk-multi-version/log_HDR.log",
-                    filemode = "a",
-                    format = Log_Format, 
-                    level = logging.INFO)
-
-        logger = logging.getLogger()
         if qc:
             tmp_hdr_nuke_script_file = os.path.join(os.path.abspath(
                                 os.path.join(self.fileinfo.path(),"../..")),
@@ -157,8 +152,16 @@ class Transcoding(object):
             hdr_path = self.qc_hdr_path
         else :
             hdr_path = self.hdr_path
-
-        logger.info( '[PATH] : ' + hdr_path )
+        
+        if platform.system() in ('Windows',"Microsoft"):
+            hdr_log_path = '\\10.0.40.12\user\user\pipeline\kyoungmin\work\toolkit\tk-multi-version\log_HDR.log'
+        else:
+            hdr_log_path = '/storenext/user/pipeline/kyoungmin/work/toolkit/tk-multi-version/log_HDR.log'
+        now = datetime.datetime.now()
+        temp = sys.stdout
+        with open( hdr_log_path, 'a+') as sys.stdout:
+            print( now.strftime('%Y-%m-%d %H:%M:%S') + ' - [PATH] : {0}'.format(hdr_path))
+        sys.stdout = temp
 
         nk = ''
         nk += '#-*- coding: utf-8 -*-\n'
@@ -193,7 +196,7 @@ class Transcoding(object):
 
         if not os.path.exists( os.path.dirname( tmp_hdr_nuke_script_file) ):
             cur_umask = os.umask(0)
-            os.makedirs(os.path.dirname( tmp_hdr_nuke_script_file),0777 )
+            os.makedirs(os.path.dirname( tmp_hdr_nuke_script_file), 0o777 )
             os.umask(cur_umask)
 
         with open( tmp_hdr_nuke_script_file, 'w' ) as f:
@@ -600,7 +603,7 @@ class Transcoding(object):
         
         if not os.path.exists( os.path.dirname( tmp_nuke_script_file) ):
             cur_umask = os.umask(0)
-            os.makedirs(os.path.dirname( tmp_nuke_script_file),0777 )
+            os.makedirs(os.path.dirname( tmp_nuke_script_file),0o777 )
             os.umask(cur_umask)
 
         with open( tmp_nuke_script_file, 'w' ) as f:
@@ -696,7 +699,7 @@ class Transcoding(object):
 
         if not os.path.exists( thumbnail_path ):
             cur_umask = os.umask(0)
-            os.makedirs( thumbnail_path,0777 )
+            os.makedirs( thumbnail_path, 0o777 )
             os.umask(cur_umask)
         if self.selected_type == "mov":
             thumb_template = os.path.join( thumbnail_path,
