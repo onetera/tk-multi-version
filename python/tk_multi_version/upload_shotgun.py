@@ -105,6 +105,8 @@ class Transcoding(object):
             command = ['rez-env', nuke_ver,'alexa_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver,'legacy_config','--','nuke','-ix']
+        if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver,'sony_config','--','nuke','-ix']
         
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
