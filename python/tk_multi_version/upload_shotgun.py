@@ -518,8 +518,15 @@ class Transcoding(object):
         else:
             previous_node = 'read'
 
-        if self.context.project['name'] in ['school','westworld']:
-            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
+        if self.context.project['name'] in ['westworld','asd2']:
+            nk += 'burnin = nuke.nodes.m83_gizmo(name="m83_gizmo", inputs = [{}])\n'.format( previous_node )
+            nk += 'burnin["seq"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[0])
+            nk += 'burnin["shot"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[1])
+            nk += 'burnin["team"].setValue("{}")\n'.format(self.context.step['name'])
+            nk += 'burnin["artist"].setValue("{}")\n'.format(self.context.user['name'])
+            nk += 'burnin["version"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0].split("_")[-1])
+            #nk += 'burnin["input.first"].setValue("{}")\n'.format(self.context.task['name'])
+            #nk += 'burnin["input.last"].setValue("{}")\n'.format(self.context.task['name'])
         else:
             nk += 'if width > 3000 : \n'
             nk += '    reformat = nuke.nodes.Reformat(inputs=[{}],type=2,scale=.5)\n'.format( previous_node )
@@ -527,15 +534,15 @@ class Transcoding(object):
             nk += 'else : \n'
             nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
 
-        nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
-        nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
-        nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
-        nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
-        if self.context.project['name'] in ['sweethome','westworld']:
-            nk += 'burnin["timecard"].setValue("")\n'
-        else:
-            nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
-        nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
+            nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
+            nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
+            nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
+            nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
+            if self.context.project['name'] in ['sweethome','westworld']:
+                nk += 'burnin["timecard"].setValue("")\n'
+            else:
+                nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
+            nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
         nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
