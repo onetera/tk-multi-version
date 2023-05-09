@@ -523,7 +523,7 @@ class Transcoding(object):
             nk += 'burnin["seq"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[0])
             nk += 'burnin["shot"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[1])
             nk += 'burnin["team"].setValue("{}")\n'.format(self.context.step['name'])
-            nk += 'burnin["artist"].setValue("{}")\n'.format(self.context.user['name'])
+            # nk += 'burnin["artist"].setValue("{}")\n'.format(self.context.user['name'])
             nk += 'burnin["version"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0].split("_")[-1])
             #nk += 'burnin["input.first"].setValue("{}")\n'.format(self.context.task['name'])
             #nk += 'burnin["input.last"].setValue("{}")\n'.format(self.context.task['name'])
@@ -544,9 +544,15 @@ class Transcoding(object):
                 nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
             nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
         nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
+        if self.context.project['name'] in ['westworld','asd2']:
+            nk += 'write["raw"].setValue(True)\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
-        nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+        if self.context.project['name'] in ['westworld','asd2']:
+            nk += 'write["mov64_codec"].setValue("h264")\n'
+            nk += 'write["mov64_quality"].setValue(2)\n'
+        else:
+            nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         if self.setting.dnxhd_profile:
             nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
         #nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
@@ -589,7 +595,12 @@ class Transcoding(object):
             nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=webm_output )\n'
             nk += 'write["file_type"].setValue( "mov" )\n'
             nk += 'write["create_directories"].setValue(True)\n'
-            nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+            if self.context.project['name'] in ['westworld','asd2']:
+                nk += 'write["raw"].setValue(True)\n'
+                nk += 'write["mov64_codec"].setValue("h264")\n'
+                nk += 'write["mov64_quality"].setValue(2)\n'
+            else:
+                nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
             if self.setting.dnxhd_profile:
                 nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
 
@@ -614,6 +625,7 @@ class Transcoding(object):
             cur_umask = os.umask(0)
             os.makedirs(os.path.dirname( tmp_nuke_script_file),0o777 )
             os.umask(cur_umask)
+
 
         with open( tmp_nuke_script_file, 'w' ) as f:
             f.write( nk )
