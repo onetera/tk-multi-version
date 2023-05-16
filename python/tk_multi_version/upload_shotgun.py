@@ -559,7 +559,10 @@ class Transcoding(object):
         if self.context.project['name'] in ['voice4', 'robin', 'westworld']:
             nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
         else:
-            nk += 'write["mov64_fps"].setValue(24)\n'
+            if self.context.project['name'] in ['westworld','asd2']:
+                nk += 'write["mov64_fps"].setValue(23.976)\n'
+            else:
+                nk += 'write["mov64_fps"].setValue(24)\n'
         if self.fileinfo.tail() in ['.dpx','.exr']:
             nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
         else:
