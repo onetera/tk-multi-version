@@ -79,7 +79,7 @@ class Output(object):
 
 class Transcoding(object):
 
-    def __init__(self,fileinfo,context,selected_type,desc):
+    def __init__(self,fileinfo,context,selected_type,desc,fps_is_checked):
 
         
         if selected_type in ["mov","image"]:
@@ -90,6 +90,7 @@ class Transcoding(object):
         self.context = context
         self.selected_type = selected_type
         self.desc = desc
+        self.fps_checked = fps_is_checked
             
 
     def create_mov(self, qc = False ):
@@ -559,7 +560,7 @@ class Transcoding(object):
         if self.context.project['name'] in ['voice4', 'robin', 'westworld']:
             nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
         else:
-            if self.context.project['name'] in ['westworld','asd2']:
+            if self.context.project['name'] in ['westworld','asd2'] or self.fps_checked:
                 nk += 'write["mov64_fps"].setValue(23.976)\n'
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
@@ -609,6 +610,8 @@ class Transcoding(object):
 
             if self.context.project['name'] in ['voice4','robin', 'westworld']:
                 nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
+            elif self.fps_checked:
+                nk += 'write["mov64_fps"].setValue(23.976)\n'
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
             if self.fileinfo.tail() in ['.dpx','.exr']:
@@ -622,7 +625,6 @@ class Transcoding(object):
         if not platform.system() in ('Windows',"Microsoft"):
             nk += 'os.remove("{}")\n'.format( tmp_nuke_script_file)
         nk += 'exit()\n'
-
         
         if not os.path.exists( os.path.dirname( tmp_nuke_script_file) ):
             cur_umask = os.umask(0)
