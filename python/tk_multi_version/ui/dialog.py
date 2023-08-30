@@ -13,7 +13,8 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
 
         Dialog.setObjectName("Dialog")
-        Dialog.resize(1180, 820)
+        # Dialog.resize(1180, 820)
+        Dialog.resize(1350, 820)
 
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")

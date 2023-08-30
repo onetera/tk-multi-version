@@ -79,7 +79,7 @@ class Output(object):
 
 class Transcoding(object):
 
-    def __init__(self,fileinfo,context,selected_type,desc,fps_is_checked):
+    def __init__(self,fileinfo,context,selected_type,desc,mov_colorspace,fps_is_checked):
 
         
         if selected_type in ["mov","image"]:
@@ -90,6 +90,7 @@ class Transcoding(object):
         self.context = context
         self.selected_type = selected_type
         self.desc = desc
+        self.mov_colorspace = mov_colorspace
         self.fps_checked = fps_is_checked
             
 
@@ -98,8 +99,10 @@ class Transcoding(object):
             return
         if self.selected_type == "mov":
             return
+        
         nuke_ver = 'nuke-13' if qc else 'nuke-12'
         command = ['rez-env', nuke_ver,'--','nuke','-ix']
+
         if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver ,'ocio_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
@@ -110,11 +113,10 @@ class Transcoding(object):
             command = ['rez-env', nuke_ver,'sony_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver,'alexa4_config','--','nuke','-ix']
-        
+            
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
         command.append( nuke_script_file )
-
 
         try:
             print(command)
@@ -406,18 +408,18 @@ class Transcoding(object):
             
             shot_ent = shotgun.find_one("Shot",[['id','is',entity_ent['id']]],['tags'])
             #check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591,4830]] 
-
         
-
         
-
         
         self.output_info = shotgun.find_one("Project",[['id','is',project['id']]],
                                ['sg_colorspace','sg_mov_codec',
                                'sg_out_format','sg_fps','sg_mov_colorspace'])
         
+        if self.mov_colorspace != "NONE":
+            self.output_info['sg_mov_colorspace'] = str(self.mov_colorspace)
+
         
-    
+        
         setting = Output(self.output_info,shot_info)
         self.setting = setting
 
@@ -567,7 +569,10 @@ class Transcoding(object):
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
         if self.fileinfo.tail() in ['.dpx','.exr']:
-            nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+            if self.mov_colorspace != "NONE":
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+            else:
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
         else:
             nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
@@ -617,7 +622,11 @@ class Transcoding(object):
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
             if self.fileinfo.tail() in ['.dpx','.exr']:
-                nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+                if self.mov_colorspace != "NONE":
+                    nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+                else:
+                    nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
+                
             else:
                 nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
             nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
