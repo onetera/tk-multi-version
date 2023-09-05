@@ -27,7 +27,7 @@ class Version(sgtk.platform.Application):
             tk_multi_version = self.import_module("tk_multi_version")
             # register command
             cb = lambda: tk_multi_version.show_dialog(self)
-            menu_caption = "Version_test"
+            menu_caption = "Version"
             self.engine.register_command(menu_caption, cb)
         except Exception:
             traceback.print_exc()
