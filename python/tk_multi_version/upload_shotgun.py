@@ -79,7 +79,7 @@ class Output(object):
 
 class Transcoding(object):
 
-    def __init__(self,fileinfo,context,selected_type,desc,mov_colorspace,fps_is_checked):
+    def __init__(self,fileinfo,context,selected_type,seq_colorspace, desc,mov_colorspace,fps_is_checked):
 
         
         if selected_type in ["mov","image"]:
@@ -91,6 +91,7 @@ class Transcoding(object):
         self.selected_type = selected_type
         self.desc = desc
         self.mov_colorspace = mov_colorspace
+        self.seq_colorspace = seq_colorspace
         self.fps_checked = fps_is_checked
             
 
@@ -415,13 +416,18 @@ class Transcoding(object):
                                ['sg_colorspace','sg_mov_codec',
                                'sg_out_format','sg_fps','sg_mov_colorspace'])
         
+        print( "=======test info============"   )
+        if self.seq_colorspace != "NONE":
+            # print(self.seq_colorspace)
+            self.output_info['sg_colorspace'] = str(self.seq_colorspace)
+            shot_info['sg_colorspace'] = str(self.seq_colorspace)
         if self.mov_colorspace != "NONE":
+            # print(self.mov_colorspace)
             self.output_info['sg_mov_colorspace'] = str(self.mov_colorspace)
 
-        
-        
         setting = Output(self.output_info,shot_info)
         self.setting = setting
+
 
         print( "=======settting info============"   )
         print( self.setting.colorspace              )
@@ -504,7 +510,10 @@ class Transcoding(object):
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
         if self.fileinfo.tail() in ['.dpx','.exr']:
-            nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+            if self.seq_colorspace != "NONE":
+                nk += 'read["colorspace"].setValue( "{}")\n'.format(self.seq_colorspace)
+            else:
+                nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
         else:
             nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
         
@@ -570,7 +579,7 @@ class Transcoding(object):
                 nk += 'write["mov64_fps"].setValue(24)\n'
         if self.fileinfo.tail() in ['.dpx','.exr']:
             if self.mov_colorspace != "NONE":
-                nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.mov_colorspace)
             else:
                 nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
         else:
