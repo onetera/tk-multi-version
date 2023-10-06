@@ -75,7 +75,7 @@ class Output(object):
                 elif not text.find("Sony") == -1 and\
                     shot_colorspace == 'Sony.rec709':
                     self.colorspace = 'rec709'
-                elif not text.find("Arri") == -1 and\
+                elif not text.find("Arri4") == -1 and\
                     shot_colorspace == 'Arri.rec709':
                     self.colorspace = 'rec709'
                 elif not self.colorspace == shot_colorspace:
@@ -118,15 +118,9 @@ class Transcoding(object):
             command = ['rez-env', nuke_ver,'legacy_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver,'sony_config','--','nuke','-ix']
-<<<<<<< HEAD
-        if not self.output_info['sg_colorspace'].find("Arri") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env', nuke_ver,'alexa4_config','--','nuke','-ix']
-
-=======
         if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver,'alexa4_config','--','nuke','-ix']
             
->>>>>>> upstream/master
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
         command.append( nuke_script_file )
