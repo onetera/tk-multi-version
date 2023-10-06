@@ -403,7 +403,9 @@ class Transcoding(object):
         check_tag = None
         shotgun = engine.shotgun
         entity_ent = self.context.entity
-        plate_ent = shotgun.find_one("PublishedFileType",[['id','is',54]])
+        plate_ent = shotgun.find_one("PublishedFileType",[['id','is',54]]) # id 54 => Plate
+        # print( "=======entity_ent============"   )
+        # print(entity_ent)
         if entity_ent['type'] == "Shot":
             filter_pub = [
                 ['entity','is',entity_ent],

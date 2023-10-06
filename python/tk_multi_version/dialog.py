@@ -32,14 +32,16 @@ MOV_COLORSPACE = [
     "NONE",
     "linear",
     "rec709",
-    "sRGB"
+    "sRGB",
+    "raw"
 ]
 
 SEQ_COLORSPACE =[
     "NONE",
-    "rec709",
     "linear",
+    "rec709",
     "Cineon",
+    "raw"
 ]
 
 
