@@ -23,9 +23,24 @@ from .ui.selected_files_widget import Ui_SelectedFilesWidget
 # by importing QT from sgtk rather than directly, we ensure that
 # the code will be compatible with both PySide and PyQt.
 from sgtk.platform.qt import QtCore, QtGui
+# from sgtk.platform.qt import QCheckBox
 from .ui.dialog import Ui_Dialog
 from .framework_qtwidgets import *
 from .upload_shotgun import *
+
+MOV_COLORSPACE = [
+    "NONE",
+    "linear",
+    "rec709",
+    "sRGB"
+]
+
+SEQ_COLORSPACE =[
+    "NONE",
+    "rec709",
+    "linear",
+    "Cineon",
+]
 
 
 # There are two loggers
@@ -96,14 +111,16 @@ class AppDialog(QtGui.QWidget):
         selected_item_list = self.get_selected_item_list()
         if not selected_item_list:
             return
-        for selected_type, item, context, desc in selected_item_list:
+
+        for selected_type, item, context, seq_colorspace ,desc, mov_colorspace, fps_is_checked in selected_item_list:
             if not item:
                 return
+            print(seq_colorspace)
+            print(mov_colorspace)
             # desc = self.ui.desc_widget.toPlainText()
-
             qc_bool = True if self.qc_chk.isChecked() else False
 
-            trascoding = Transcoding(item,context,selected_type,desc)
+            trascoding = Transcoding(item,context,selected_type,seq_colorspace, desc,mov_colorspace,fps_is_checked)
             version = UploadVersion(item,context,selected_type)
             # trascoding = Transcoding(item,self.context,selected_type,desc)
             # version = UploadVersion(item,self.context,selected_type)
@@ -376,7 +393,16 @@ class AppDialog(QtGui.QWidget):
         if self._my_tasks_model:
             self._my_tasks_model.async_refresh()
 
+    def _init_combobox(self, combobox):
+        for color in MOV_COLORSPACE:
+            combobox.addItem(color)
+
+    def _init_combobox_seq_color(self, combobox):
+        for color in SEQ_COLORSPACE:
+            combobox.addItem(color)
+
     def update_from_list_click( self ):
+        print("update_from_list_click")
         model = self.file_form.ui.file_view.model()
         if isinstance( model, QtGui.QFileSystemModel ):
             item_name = self.add_selected_mov_refresh()
@@ -390,8 +416,19 @@ class AppDialog(QtGui.QWidget):
         row_count = self.selected_ui.widget.rowCount()
         # print(row_count)
         self.selected_ui.widget.insertRow( row_count )
+        checkbox = QtGui.QCheckBox("23.976")
+        combobox = QtGui.QComboBox()
+        self._init_combobox(combobox)
+        seq_color_combobox = QtGui.QComboBox()
+        self._init_combobox_seq_color(seq_color_combobox)
+        print(self._init_combobox_seq_color)
+        # combobox.addItem(COLORSPACE)
         self.selected_ui.widget.setItem( row_count, 0, QtGui.QTableWidgetItem( self.context.entity['name'] ) )
         self.selected_ui.widget.setItem( row_count, 1, QtGui.QTableWidgetItem( item_name ) )
+        self.selected_ui.widget.setCellWidget(row_count, 2, seq_color_combobox)
+        self.selected_ui.widget.setCellWidget(row_count, 4, combobox)
+        self.selected_ui.widget.setCellWidget(row_count, 5, checkbox)
+        # self.selected_ui.widget.cellWidget(row_count, 5).setAlignment(QtGui.QWidget.Qt.AlignCenter)
         # self.selected_ui.widget.resizeRowsToContents( )
         desc_editor = QtGui.QPlainTextEdit()
         # desc_editor.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -399,11 +436,17 @@ class AppDialog(QtGui.QWidget):
         # desc_editor.clear()
         desc_editor.setFrameStyle( QtGui.QFrame.NoFrame )
         self.resize_height_toContents(desc_editor)
-        self.selected_ui.widget.setCellWidget( row_count, 2, desc_editor )
+        self.selected_ui.widget.setCellWidget( row_count, 3, desc_editor )
         self.selected_ui.widget.resizeColumnToContents( 0 )
         self.selected_ui.widget.resizeColumnToContents( 1 )
         desc_editor.textChanged.connect( lambda : self.resize_height_toContents(desc_editor) )
 
+        
+        checkbox.stateChanged.connect(lambda state, r=row_count: self.checkbox_callback(state, r))
+
+
+    def checkbox_callback(self, state, row):
+        print("Checkbox state changed for row {}: {}".format(row, state))
 
     def update_from_selected_ui_click( self ):
         row = self.selected_ui.widget.currentIndex().row()
@@ -474,16 +517,25 @@ class AppDialog(QtGui.QWidget):
                 print(item.text())
                 selected_item = self.selected_ui.widget.findItems(item.text(), QtCore.Qt.MatchExactly)
                 row = selected_item[0].row()
-                desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
-                selected_item_list.append([ "seq", item, item_context, desc ])
+                seq_colorspace = self.selected_ui.widget.cellWidget(row, 2).currentText()
+                desc = self.selected_ui.widget.cellWidget( row, 3 ).toPlainText()
+                mov_colorspace = self.selected_ui.widget.cellWidget(row, 4).currentText()
+                fps_checkbox = self.selected_ui.widget.cellWidget(row, 5)
+                fps_is_checked = fps_checkbox.isChecked()
+                selected_item_list.append([ "seq", item, item_context, seq_colorspace,desc, mov_colorspace,fps_is_checked ])
             elif "*."+item.suffix().lower() in self.file_form.image_filters:
                 selected_item = self.selected_ui.widget.findItems(item.fileName(), QtCore.Qt.MatchExactly)
                 row = selected_item[0].row()
-                desc = self.selected_ui.widget.cellWidget( row, 2 ).toPlainText()
+                seq_colorspace = self.selected_ui.widget.cellWidget(row, 2).currentText()
+                desc = self.selected_ui.widget.cellWidget( row, 3 ).toPlainText()
+                mov_colorspace = self.selected_ui.widget.cellWidget(row, 4).currentText()
+                fps_checkbox = self.selected_ui.widget.cellWidget(row, 5)
+                fps_is_checked = fps_checkbox.isChecked()
                 if item.suffix() in ["mov","ogv","mp4"]:
-                    selected_item_list.append([ "mov", item, item_context, desc ])
+                    selected_item_list.append([ "mov", item, item_context, seq_colorspace,desc ,mov_colorspace,fps_is_checked ])
                 else:
-                    selected_item_list.append([ "image", item, item_context, desc ])
+                    selected_item_list.append([ "image", item, item_context, seq_colorspace,desc ,mov_colorspace,fps_is_checked ])
+                
         return selected_item_list
 
 

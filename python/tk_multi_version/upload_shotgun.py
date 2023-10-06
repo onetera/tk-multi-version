@@ -85,7 +85,7 @@ class Output(object):
 
 class Transcoding(object):
 
-    def __init__(self,fileinfo,context,selected_type,desc):
+    def __init__(self,fileinfo,context,selected_type,seq_colorspace, desc,mov_colorspace,fps_is_checked):
 
         
         if selected_type in ["mov","image"]:
@@ -96,6 +96,9 @@ class Transcoding(object):
         self.context = context
         self.selected_type = selected_type
         self.desc = desc
+        self.mov_colorspace = mov_colorspace
+        self.seq_colorspace = seq_colorspace
+        self.fps_checked = fps_is_checked
             
 
     def create_mov(self, qc = False ):
@@ -103,8 +106,10 @@ class Transcoding(object):
             return
         if self.selected_type == "mov":
             return
+        
         nuke_ver = 'nuke-13' if qc else 'nuke-12'
         command = ['rez-env', nuke_ver,'--','nuke','-ix']
+
         if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver ,'ocio_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
@@ -113,13 +118,18 @@ class Transcoding(object):
             command = ['rez-env', nuke_ver,'legacy_config','--','nuke','-ix']
         if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver,'sony_config','--','nuke','-ix']
+<<<<<<< HEAD
         if not self.output_info['sg_colorspace'].find("Arri") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
             command = ['rez-env', nuke_ver,'alexa4_config','--','nuke','-ix']
 
+=======
+        if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver,'alexa4_config','--','nuke','-ix']
+            
+>>>>>>> upstream/master
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
         command.append( nuke_script_file )
-
 
         try:
             print(command)
@@ -411,20 +421,25 @@ class Transcoding(object):
             
             shot_ent = shotgun.find_one("Shot",[['id','is',entity_ent['id']]],['tags'])
             #check_tag = [ x['id'] for x in shot_ent['tags'] if x['id'] in [4591,4830]] 
-
         
-
         
-
         
         self.output_info = shotgun.find_one("Project",[['id','is',project['id']]],
                                ['sg_colorspace','sg_mov_codec',
                                'sg_out_format','sg_fps','sg_mov_colorspace'])
         
-        
-    
+        print( "=======test info============"   )
+        if self.seq_colorspace != "NONE":
+            # print(self.seq_colorspace)
+            self.output_info['sg_colorspace'] = str(self.seq_colorspace)
+            shot_info['sg_colorspace'] = str(self.seq_colorspace)
+        if self.mov_colorspace != "NONE":
+            # print(self.mov_colorspace)
+            self.output_info['sg_mov_colorspace'] = str(self.mov_colorspace)
+
         setting = Output(self.output_info,shot_info)
         self.setting = setting
+
 
         print( "=======settting info============"   )
         print( self.setting.colorspace              )
@@ -507,7 +522,10 @@ class Transcoding(object):
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
         if self.fileinfo.tail() in ['.dpx','.exr']:
-            nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+            if self.seq_colorspace != "NONE":
+                nk += 'read["colorspace"].setValue( "{}")\n'.format(self.seq_colorspace)
+            else:
+                nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
         else:
             nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
         
@@ -526,8 +544,15 @@ class Transcoding(object):
         else:
             previous_node = 'read'
 
-        if self.context.project['name'] in ['school','westworld']:
-            nk += 'burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
+        if self.context.project['name'] in ['westworld','asd2']:
+            nk += 'burnin = nuke.nodes.m83_gizmo(name="m83_gizmo", inputs = [{}])\n'.format( previous_node )
+            nk += 'burnin["seq"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[0])
+            nk += 'burnin["shot"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[1])
+            nk += 'burnin["team"].setValue("{}")\n'.format(self.context.step['name'])
+            # nk += 'burnin["artist"].setValue("{}")\n'.format(self.context.user['name'])
+            nk += 'burnin["version"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0].split("_")[-1])
+            #nk += 'burnin["input.first"].setValue("{}")\n'.format(self.context.task['name'])
+            #nk += 'burnin["input.last"].setValue("{}")\n'.format(self.context.task['name'])
         else:
             nk += 'if width > 3000 : \n'
             nk += '    reformat = nuke.nodes.Reformat(inputs=[{}],type=2,scale=.5)\n'.format( previous_node )
@@ -535,28 +560,40 @@ class Transcoding(object):
             nk += 'else : \n'
             nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
 
-        nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
-        nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
-        nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
-        nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
-        if self.context.project['name'] in ['sweethome','westworld']:
-            nk += 'burnin["timecard"].setValue("")\n'
-        else:
-            nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
-        nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
+            nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
+            nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
+            nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
+            nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
+            if self.context.project['name'] in ['sweethome','westworld']:
+                nk += 'burnin["timecard"].setValue("")\n'
+            else:
+                nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
+            nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
         nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
+        if self.context.project['name'] in ['westworld','asd2']:
+            nk += 'write["raw"].setValue(True)\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
         nk += 'write["create_directories"].setValue(True)\n'
-        nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+        if self.context.project['name'] in ['westworld','asd2']:
+            nk += 'write["mov64_codec"].setValue("h264")\n'
+            nk += 'write["mov64_quality"].setValue(2)\n'
+        else:
+            nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
         if self.setting.dnxhd_profile:
             nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
         #nk += 'write["mov64_fps"].setValue( {})\n'.format(setting.mov_fps)
         if self.context.project['name'] in ['voice4', 'robin', 'westworld']:
             nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
         else:
-            nk += 'write["mov64_fps"].setValue(24)\n'
+            if self.context.project['name'] in ['westworld','asd2'] or self.fps_checked:
+                nk += 'write["mov64_fps"].setValue(23.976)\n'
+            else:
+                nk += 'write["mov64_fps"].setValue(24)\n'
         if self.fileinfo.tail() in ['.dpx','.exr']:
-            nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+            if self.mov_colorspace != "NONE":
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.mov_colorspace)
+            else:
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
         else:
             nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
@@ -590,16 +627,27 @@ class Transcoding(object):
             nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=webm_output )\n'
             nk += 'write["file_type"].setValue( "mov" )\n'
             nk += 'write["create_directories"].setValue(True)\n'
-            nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
+            if self.context.project['name'] in ['westworld','asd2']:
+                nk += 'write["raw"].setValue(True)\n'
+                nk += 'write["mov64_codec"].setValue("h264")\n'
+                nk += 'write["mov64_quality"].setValue(2)\n'
+            else:
+                nk += 'write["mov64_codec"].setValue("{}")\n'.format(setting.mov_codec)
             if self.setting.dnxhd_profile:
                 nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
 
             if self.context.project['name'] in ['voice4','robin', 'westworld']:
                 nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
+            elif self.fps_checked:
+                nk += 'write["mov64_fps"].setValue(23.976)\n'
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
             if self.fileinfo.tail() in ['.dpx','.exr']:
-                nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+                if self.mov_colorspace != "NONE":
+                    nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+                else:
+                    nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
+                
             else:
                 nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
             nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
@@ -609,12 +657,12 @@ class Transcoding(object):
         if not platform.system() in ('Windows',"Microsoft"):
             nk += 'os.remove("{}")\n'.format( tmp_nuke_script_file)
         nk += 'exit()\n'
-
         
         if not os.path.exists( os.path.dirname( tmp_nuke_script_file) ):
             cur_umask = os.umask(0)
             os.makedirs(os.path.dirname( tmp_nuke_script_file),0o777 )
             os.umask(cur_umask)
+
 
         with open( tmp_nuke_script_file, 'w' ) as f:
             f.write( nk )
