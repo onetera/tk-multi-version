@@ -72,6 +72,12 @@ class Output(object):
                 if not text.find("ACES") == -1 and\
                     shot_colorspace == 'rec709':
                     self.colorspace = 'Output - Rec.709'
+                elif not text.find("Sony") == -1 and\
+                    shot_colorspace == 'Sony.rec709':
+                    self.colorspace = 'rec709'
+                elif not text.find("Arri4") == -1 and\
+                    shot_colorspace == 'Arri.rec709':
+                    self.colorspace = 'rec709'
                 elif not self.colorspace == shot_colorspace:
                     self.colorspace = shot_colorspace
                     self.mov_colorspace = shot_colorspace
