@@ -138,14 +138,15 @@ class Transcoding(object):
             return
         hdr_nuke_script = self.create_hdr_nuke_script( qc )
 
-        nuke_ver = 'nuke-13' if qc else 'nuke-12'
-        command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
-        command.append( hdr_nuke_script )
-        
-        try:
-            hdr_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make hdr mov {}".format(e))
+        if hdr_nuke_script:
+            nuke_ver = 'nuke-13' if qc else 'nuke-12'
+            command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
+            command.append( hdr_nuke_script )
+
+            try:
+                hdr_p = subprocess.check_call(command)
+            except Exception as e:
+                raise Exception("make hdr mov {}".format(e))
     
     def create_hdr_nuke_script( self, qc = False ):
         if qc:
@@ -168,7 +169,8 @@ class Transcoding(object):
             hdr_path = self.hdr_path
         
         if platform.system() in ('Windows',"Microsoft"):
-            hdr_log_path = '\\10.0.40.12\user\user\pipeline\kyoungmin\work\toolkit\tk-multi-version\log_HDR.log'
+            return 
+            hdr_log_path = '\\\\10.0.40.12\\user\\user\\pipeline\\kyoungmin\\work\\toolkit\\tk-multi-version\\log_HDR.log'
         else:
             hdr_log_path = '/storenext/user/pipeline/kyoungmin/work/toolkit/tk-multi-version/log_HDR.log'
         now = datetime.datetime.now()
