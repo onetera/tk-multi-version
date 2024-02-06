@@ -189,8 +189,8 @@ class AppDialog(QtGui.QWidget):
         self.context = self._app.sgtk.context_from_entity_dictionary(selection_detail['entity'])
         # pprint(self.context)
         root_path = [x for x in self.context.filesystem_locations if x.find("_3d") == -1 ]
-        print 'root_path',
-        print(root_path)
+        print('root_path', root_path)
+        # print(root_path)
         init_path = " "
         if not root_path:
             entity_type = "Task"
