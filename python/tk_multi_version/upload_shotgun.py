@@ -426,7 +426,10 @@ class Transcoding(object):
                                ['sg_colorspace','sg_mov_codec',
                                'sg_out_format','sg_fps','sg_mov_colorspace'])
         
-        print( "=======test info============"   )
+        if entity_ent['type'] == "Asset" :
+            shot_info = {'sg_colorspace':''}
+        
+        # print( "=======test info============"   ):
         if self.seq_colorspace != "NONE":
             # print(self.seq_colorspace)
             self.output_info['sg_colorspace'] = str(self.seq_colorspace)
@@ -440,6 +443,7 @@ class Transcoding(object):
 
 
         print( "=======settting info============"   )
+        print( entity_ent['type'] )
         print( self.setting.colorspace              )
         print( self.setting.mov_colorspace          )
         print( "=======settting info============"   )
