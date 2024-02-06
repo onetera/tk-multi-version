@@ -6,7 +6,7 @@ UI_PYTHON_PATH = "../python/tk_multi_version/ui"
 
 
 def build_ui(ui_name):
-    print "Building UI: %s" % ui_name
+    print("Building UI: %s" % ui_name)
     out = check_output(
         [
             'pyside-uic',
@@ -20,7 +20,7 @@ def build_ui(ui_name):
 
 
 def build_res(res_name):
-    print "Building Resource: %s" % res_name
+    print("Building Resource: %s" % res_name)
     out = check_output(
         [
             "C:/Python27/Lib/site-packages/PySide/pyside-rcc",
@@ -32,7 +32,7 @@ def build_res(res_name):
 
 
 if __name__ == "__main__":
-    print "Start"
+    print("Start")
     build_ui('dialog')
     build_ui('files_widget')
     build_ui('task_widget')
