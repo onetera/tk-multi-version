@@ -217,6 +217,9 @@ class Transcoding(object):
 
         with open( tmp_hdr_nuke_script_file, 'w' ) as f:
             f.write( nk )
+        
+        os.chmod(tmp_hdr_nuke_script_file, 0o777)
+        
         return tmp_hdr_nuke_script_file 
 
 
@@ -668,6 +671,9 @@ class Transcoding(object):
 
         with open( tmp_nuke_script_file, 'w' ) as f:
             f.write( nk )
+        
+        os.chmod( tmp_nuke_script_file, 0o777 )
+
         return tmp_nuke_script_file 
 
     
