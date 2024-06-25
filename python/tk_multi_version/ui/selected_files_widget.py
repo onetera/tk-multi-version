@@ -1,10 +1,15 @@
-from tank.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore, QtGui
 
 class Ui_SelectedFilesWidget( object ):
     def setupUi( self, selected_ui ):
         selected_ui.setObjectName( "selected_ui" )
 
-        self.widget = QtGui.QTableWidget()      
+        self.widget = QtGui.QTableWidget()
+
+        pyside_version = repr(self.widget)
+        pyside_version = pyside_version.replace("<", "")
+        pyside_version = pyside_version.replace(">", "")
+        pyside_version = pyside_version.split(".")[0]
         # self.widget.setEditTriggers( QtGui.QAbstractItemView.NoEditTriggers )
         # self.widget.horizontalHeader().setResizeMode( QtGui.QHeaderView.Stretch )
         # self.widget.resizeColumnToContents( 0 )
@@ -17,12 +22,20 @@ class Ui_SelectedFilesWidget( object ):
         self.widget.horizontalHeader().resizeSection( 3, 275 )
         self.widget.horizontalHeader().resizeSection( 4, 90 )
         self.widget.horizontalHeader().resizeSection( 5, 15 )
-        self.widget.horizontalHeader().setResizeMode( 0, QtGui.QHeaderView.Fixed )
-        self.widget.horizontalHeader().setResizeMode( 1, QtGui.QHeaderView.Fixed )
-        self.widget.horizontalHeader().setResizeMode( 2, QtGui.QHeaderView.Fixed )
-        self.widget.horizontalHeader().setResizeMode( 3, QtGui.QHeaderView.Fixed )
-        self.widget.horizontalHeader().setResizeMode( 4, QtGui.QHeaderView.Fixed )
-        self.widget.horizontalHeader().setResizeMode( 5, QtGui.QHeaderView.Fixed )
+        if pyside_version == 'PySide2':
+            self.widget.horizontalHeader().setSectionResizeMode( 0, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setSectionResizeMode( 1, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setSectionResizeMode( 2, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setSectionResizeMode( 3, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setSectionResizeMode( 4, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setSectionResizeMode( 5, QtGui.QHeaderView.Fixed )
+        else:
+            self.widget.horizontalHeader().setResizeMode( 0, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setResizeMode( 1, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setResizeMode( 2, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setResizeMode( 3, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setResizeMode( 4, QtGui.QHeaderView.Fixed )
+            self.widget.horizontalHeader().setResizeMode( 5, QtGui.QHeaderView.Fixed )
         self.widget.horizontalHeader().setStretchLastSection( True )
 
         self.widget.setDragDropOverwriteMode( False )
