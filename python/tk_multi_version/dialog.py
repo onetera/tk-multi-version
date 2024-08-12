@@ -306,7 +306,7 @@ class AppDialog(QtGui.QWidget):
         self._app.shotgun.update('Task',self.context.task['id'],data)
 
     def get_comp_task4qc( self ):
-        if self.context.step['name'] == 'comp':
+        if self.context.step and self.context.step['name'] == 'comp':
             self.qc_chk.setHidden( False )
         else:
             self.qc_chk.setChecked( False )

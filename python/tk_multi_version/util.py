@@ -12,6 +12,7 @@
 Various utility methods used by the app code
 """
 import threading
+import sys
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
@@ -72,22 +73,39 @@ def value_to_str(value):
     # handle PyQt.QVariant
     if hasattr(QtCore, "QVariant") and isinstance(value, QtCore.QVariant):
         value = value.toPyObject()
-
-    if isinstance(value, unicode):
-        # encode to str utf-8
-        return value.encode("utf-8")
-    elif isinstance(value, str):
-        # it's a string anyway so just return
-        return value
-    elif hasattr(QtCore, "QString") and isinstance(value, QtCore.QString):
-        # running PyQt!
-        # QtCore.QString inherits from str but supports 
-        # unicode, go figure!  Lets play safe and return
-        # a utf-8 string
-        return str(value.toUtf8())
+        
+    if sys.version_info.major == 2:
+        if isinstance(value, unicode):
+            # encode to str utf-8
+            return value.encode("utf-8")
+        elif isinstance(value, str):
+            # it's a string anyway so just return
+            return value
+        elif hasattr(QtCore, "QString") and isinstance(value, QtCore.QString):
+            # running PyQt!
+            # QtCore.QString inherits from str but supports 
+            # unicode, go figure!  Lets play safe and return
+            # a utf-8 string
+            return str(value.toUtf8())
+        else:
+            # For everything else, just return as string
+            return str(value)
     else:
-        # For everything else, just return as string
-        return str(value)
+        if isinstance(value, str):
+            # encode to str utf-8
+            return value.encode("utf-8")
+        elif isinstance(value, bytes):
+            # it's a string anyway so just return
+            return value
+        elif hasattr(QtCore, "QString") and isinstance(value, QtCore.QString):
+            # running PyQt!
+            # QtCore.QString inherits from str but supports 
+            # unicode, go figure!  Lets play safe and return
+            # a utf-8 string
+            return str(value.toUtf8())
+        else:
+            # For everything else, just return as string
+            return str(value)
 
 def get_sg_entity_name_field(entity_type):
     """
