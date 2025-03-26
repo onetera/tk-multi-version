@@ -869,13 +869,9 @@ class Transcoding(object):
             raise Exception("make montage {}".format(e))
         
         thumbnail_files = os.listdir(thumbnail_path)
-        print( )
-        print( '----------    Thnumbnailfiles   ---------------------' )
-        print( thumbnail_files )
-        print( )
         thumbnail_file = os.path.join(
                             thumbnail_path,
-                            thumbnail_files[len(thumbnail_files)/2]
+                            thumbnail_files[int(len(thumbnail_files)/2)]
                             )
         
             
