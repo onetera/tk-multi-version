@@ -107,20 +107,27 @@ class Transcoding(object):
         if self.selected_type == "mov":
             return
         
-        nuke_ver = 'nuke-13' if qc else 'nuke-12'
-        command = ['rez-env', nuke_ver,'--','nuke','-ix']
+        if platform.system() == "Windows":
+            nuke = 'Nuke12.2'
+        else:
+            nuke = 'nuke'
 
-        if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env', nuke_ver ,'ocio_config','--','nuke','-ix']
-        if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env', nuke_ver,'alexa_config','--','nuke','-ix']
-        if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env', nuke_ver,'legacy_config','--','nuke','-ix']
-        if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env', nuke_ver,'sony_config','--','nuke','-ix']
-        if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-            command = ['rez-env', nuke_ver,'alexa4_config','--','nuke','-ix']
+        nuke_ver = 'nuke-13' if qc else 'nuke-12'
+        command = ['rez-env', nuke_ver,'--',nuke,'-ix']
+
+        # if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+        #     command = ['rez-env', nuke_ver ,'ocio_config','--',nuke,'-ix']
+        # if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+        #     command = ['rez-env', nuke_ver,'alexa_config','--',nuke,'-ix']
+        # if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+        #     command = ['rez-env', nuke_ver,'legacy_config','--',nuke,'-ix']
+        # if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+        #     command = ['rez-env', nuke_ver,'sony_config','--',nuke,'-ix']
+        # if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+        #     command = ['rez-env', nuke_ver,'alexa4_config','--',nuke,'-ix']
             
+        command = ['rez-env', nuke_ver,'--',nuke,'-ix']
+
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
         command.append( nuke_script_file )
@@ -140,8 +147,14 @@ class Transcoding(object):
 
         if hdr_nuke_script:
             nuke_ver = 'nuke-13' if qc else 'nuke-12'
-            command = ['rez-env', nuke_ver ,'hdr_config','--','nuke','-ix']
-            command.append( hdr_nuke_script )
+
+            if platform.system() == "Windows":
+                nuke = 'Nuke12.2'
+            else:
+                nuke = 'nuke'
+
+            command = ['rez-env', nuke_ver ,'hdr_config','--',nuke,'-ix']
+            command.append( hdr_nuke_script )       
 
             try:
                 hdr_p = subprocess.check_call(command)
@@ -260,7 +273,10 @@ class Transcoding(object):
             mov_path = self.mov_path 
             mp4_path = self.mp4_path
         
-        command = ['rez-env','ffmpeg','--','ffmpeg','-y']
+        # if platform.system() == "Linux":
+        command = ['rez-env','ffmpeg','--','ffmpeg', '-y']
+        # else:
+        #     command = ['C:\\ffmpeg\\bin\\ffmpeg.exe', '-y']
         command.append("-i")
         command.append( mov_path )
         command.append("-vcodec")
@@ -344,6 +360,7 @@ class Transcoding(object):
         else:
         
             command = ['rez-env','ffmpeg','--','ffmpeg','-y']
+            # command = ['C:\\ffmpeg\\bin\\ffmpeg.exe', '-y']
             command.append("-i")
             if mov_webm_path :
                 command.append(mov_webm_path.replace("/","\\"))
@@ -367,10 +384,11 @@ class Transcoding(object):
             command.append("42")
             command.append(webm_path.replace("/","\\"))
 
-        try:
-            webm_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make webm {}".format(e))
+        webm_p = subprocess.check_call(command)
+        # try:
+        #     webm_p = subprocess.check_call(command)
+        # except Exception as e:
+            # raise Exception("make webm {}".format(e))
 
     def create_nuke_script(self, qc = False ):
 
@@ -526,13 +544,12 @@ class Transcoding(object):
             nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format( self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
-        if self.fileinfo.tail() in ['.dpx','.exr']:
-            if self.seq_colorspace != "NONE":
-                nk += 'read["colorspace"].setValue( "{}")\n'.format(self.seq_colorspace)
-            else:
-                nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
-        else:
-            nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
+        # if self.fileinfo.tail() in ['.dpx','.exr']: if self.seq_colorspace != "NONE":
+        #         nk += 'read["colorspace"].setValue( "{}")\n'.format(self.seq_colorspace)
+        #     else:
+        #         nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+        # else:
+        #     nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
         
         if platform.system() in ('Windows',"Microsoft"):
             nk += 'output = "{}"\n'.format( mov_path.replace("\\","/") )
@@ -549,32 +566,32 @@ class Transcoding(object):
         else:
             previous_node = 'read'
 
-        if self.context.project['name'] in ['westworld','asd2']:
-            nk += 'burnin = nuke.nodes.m83_gizmo(name="m83_gizmo", inputs = [{}])\n'.format( previous_node )
-            nk += 'burnin["seq"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[0])
-            nk += 'burnin["shot"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[1])
-            nk += 'burnin["team"].setValue("{}")\n'.format(self.context.step['name'])
-            # nk += 'burnin["artist"].setValue("{}")\n'.format(self.context.user['name'])
-            nk += 'burnin["version"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0].split("_")[-1])
-            #nk += 'burnin["input.first"].setValue("{}")\n'.format(self.context.task['name'])
-            #nk += 'burnin["input.last"].setValue("{}")\n'.format(self.context.task['name'])
-        else:
-            nk += 'if width > 3000 : \n'
-            nk += '    reformat = nuke.nodes.Reformat(inputs=[{}],type=2,scale=.5)\n'.format( previous_node )
-            nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
-            nk += 'else : \n'
-            nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
+        # if self.context.project['name'] in ['westworld','asd2']:
+        #     nk += 'burnin = nuke.nodes.m83_gizmo(name="m83_gizmo", inputs = [{}])\n'.format( previous_node )
+        #     nk += 'burnin["seq"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[0])
+        #     nk += 'burnin["shot"].setValue("{}")\n'.format(self.context.entity['name'].split("_")[1])
+        #     nk += 'burnin["team"].setValue("{}")\n'.format(self.context.step['name'])
+        #     # nk += 'burnin["artist"].setValue("{}")\n'.format(self.context.user['name'])
+        #     nk += 'burnin["version"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0].split("_")[-1])
+        #     #nk += 'burnin["input.first"].setValue("{}")\n'.format(self.context.task['name'])
+        #     #nk += 'burnin["input.last"].setValue("{}")\n'.format(self.context.task['name'])
+        # else:
+        #     nk += 'if width > 3000 : \n'
+        #     nk += '    reformat = nuke.nodes.Reformat(inputs=[{}],type=2,scale=.5)\n'.format( previous_node )
+            # nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [reformat])\n'
+            # nk += 'else : \n'
+            # nk += '    burnin = nuke.nodes.ww_burnin(name="ww_burn", inputs = [{}])\n'.format( previous_node )
 
-            nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
-            nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
-            nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
-            nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
-            if self.context.project['name'] in ['sweethome','westworld']:
-                nk += 'burnin["timecard"].setValue("")\n'
-            else:
-                nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
-            nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
-        nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=output )\n'
+            # nk += 'burnin["project_name"].setValue("{}")\n'.format(self.context.project['name'])
+            # nk += 'burnin["file_name"].setValue("{}")\n'.format(self.fileinfo.format("%h").split(".")[0])
+            # nk += 'burnin["user"].setValue("{}")\n'.format(self.context.user['name'])
+            # nk += 'burnin["task"].setValue("{}")\n'.format(self.context.task['name'])
+            # if self.context.project['name'] in ['sweethome','westworld']:
+            #     nk += 'burnin["timecard"].setValue("")\n'
+            # else:
+            #     nk += 'burnin["timecard"].setValue("{}hrs")\n'.format(timecard)
+            # nk += 'burnin["description"].setValue("{}")\n'.format(self.desc.replace("\n","_"))
+        nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [{}],file=output )\n'.format( previous_node )
         if self.context.project['name'] in ['westworld','asd2']:
             nk += 'write["raw"].setValue(True)\n'
         nk += 'write["file_type"].setValue( "mov" )\n'
@@ -594,13 +611,13 @@ class Transcoding(object):
                 nk += 'write["mov64_fps"].setValue(23.976)\n'
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
-        if self.fileinfo.tail() in ['.dpx','.exr']:
-            if self.mov_colorspace != "NONE":
-                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.mov_colorspace)
-            else:
-                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
-        else:
-            nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
+        # if self.fileinfo.tail() in ['.dpx','.exr']:
+        #     if self.mov_colorspace != "NONE":
+        #         nk += 'write["colorspace"].setValue( "{}")\n'.format(self.mov_colorspace)
+        #     else:
+        #         nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
+        # else:
+        #     nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
         #fix play webm in chrome and firefox 
@@ -629,7 +646,7 @@ class Transcoding(object):
                 nk += 'webm_output = "{}"\n'.format( mov_webm_path )
 
             
-            nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [burnin],file=webm_output )\n'
+            nk += 'write = nuke.nodes.Write(name="mov_write", inputs = [{}],file=webm_output )\n'.format( previous_node )
             nk += 'write["file_type"].setValue( "mov" )\n'
             nk += 'write["create_directories"].setValue(True)\n'
             if self.context.project['name'] in ['westworld','asd2']:
@@ -641,20 +658,20 @@ class Transcoding(object):
             if self.setting.dnxhd_profile:
                 nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
 
-            if self.context.project['name'] in ['voice4','robin', 'westworld']:
-                nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
-            elif self.fps_checked:
-                nk += 'write["mov64_fps"].setValue(23.976)\n'
-            else:
-                nk += 'write["mov64_fps"].setValue(24)\n'
-            if self.fileinfo.tail() in ['.dpx','.exr']:
-                if self.mov_colorspace != "NONE":
-                    nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
-                else:
-                    nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
+            # if self.context.project['name'] in ['voice4','robin', 'westworld']:
+            #     nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
+            # elif self.fps_checked:
+            #     nk += 'write["mov64_fps"].setValue(23.976)\n'
+            # else:
+            #     nk += 'write["mov64_fps"].setValue(24)\n'
+            # if self.fileinfo.tail() in ['.dpx','.exr']:
+            #     if self.mov_colorspace != "NONE":
+            #         nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+            #     else:
+            #         nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
                 
-            else:
-                nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
+            # else:
+            #     nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
             nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
 
@@ -695,7 +712,9 @@ class Transcoding(object):
             thumbnail_file = self.thumbnail_file
             read_path = self.read_path
 
+        
         command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
+        
         command.append("-i")
         command.append(read_path)
         command.append("-f")
@@ -714,7 +733,9 @@ class Transcoding(object):
             if self.fileinfo.suffix() in ['ogv']:
                 mov_file = self.mp4_path
 
+        
         command = ['rez-env',"ffmpeg","--","ffprobe"]
+        
         command.append(mov_file)
         command.append("-select_streams")
         command.append("v")
@@ -799,23 +820,25 @@ class Transcoding(object):
         
         else:
             command = ['rez-env',"ffmpeg","--","ffmpeg","-y"]
+            # command = ['C:\\ffmpeg\\bin\\ffmpeg.exe', '-y']
             command.append("-r")
             command.append("24")
             command.append("-i")
             command.append(mov_path.replace("/","\\"))
             command.append("-vf")
-            command.append("select=gte(n\,{0})*not(mod(n\,{0}))".format(select_code))
+            command.append('"select=gte(n\,{0})*not(mod(n\,{0}))"'.format(select_code))
             command.append("-vsync")
             command.append("0")
             command.append("-f")
             command.append("image2")
-            thumb_template =  thumb_template.replace("%","%%")
+            # thumb_template =  thumb_template.replace("%","%%")
             command.append(thumb_template.replace("/","\\"))
 
-        try:
-            webm_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make images {}".format(e))
+        webm_p = subprocess.check_call(command)
+        # try:
+        #     webm_p = subprocess.check_call(command)
+        # except Exception as e:
+        #     raise Exception("make images {}".format(e))
         
 
         if self.selected_type == "mov":
@@ -843,7 +866,7 @@ class Transcoding(object):
             command.append(thumb_template)
             command.append("-geometry")
             command.append("240x+0+0")
-            command.append("-tile")
+            command.append("-tile") 
             command.append("x1")
             command.append("-format")
             command.append("jpeg")
@@ -851,7 +874,7 @@ class Transcoding(object):
             command.append("92")
             command.append( filmstream_file )
         else:
-            command = ['magick','montage']
+            command = ['rez-env','imagemagick','--', 'magick.exe','montage']
             command.append(thumb_template.replace("/","\\"))
             command.append("-geometry")
             command.append("240x+0+0")
@@ -863,10 +886,14 @@ class Transcoding(object):
             command.append("92")
             command.append( filmstream_file.replace("/","\\"))
 
-        try:
-            webm_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make montage {}".format(e))
+        print( )
+        print( command )
+        print( )
+        webm_p = subprocess.check_call(command)
+        # try:
+        #     webm_p = subprocess.check_call(command)
+        # except Exception as e:
+        #     raise Exception("make montage {}".format(e))
         
         thumbnail_files = os.listdir(thumbnail_path)
         thumbnail_file = os.path.join(
