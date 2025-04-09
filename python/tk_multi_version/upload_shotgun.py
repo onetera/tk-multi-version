@@ -115,28 +115,23 @@ class Transcoding(object):
         nuke_ver = 'nuke-13' if qc else 'nuke-12'
         command = ['rez-env', nuke_ver,'--',nuke,'-ix']
 
-        # if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-        #     command = ['rez-env', nuke_ver ,'ocio_config','--',nuke,'-ix']
-        # if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-        #     command = ['rez-env', nuke_ver,'alexa_config','--',nuke,'-ix']
-        # if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-        #     command = ['rez-env', nuke_ver,'legacy_config','--',nuke,'-ix']
-        # if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-        #     command = ['rez-env', nuke_ver,'sony_config','--',nuke,'-ix']
-        # if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-        #     command = ['rez-env', nuke_ver,'alexa4_config','--',nuke,'-ix']
+        if platform.system() == 'Linux':
+            if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+                command = ['rez-env', nuke_ver ,'ocio_config','--',nuke,'-ix']
+            if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+                command = ['rez-env', nuke_ver,'alexa_config','--',nuke,'-ix']
+            if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+                command = ['rez-env', nuke_ver,'legacy_config','--',nuke,'-ix']
+            if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+                command = ['rez-env', nuke_ver,'sony_config','--',nuke,'-ix']
+            if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+                command = ['rez-env', nuke_ver,'alexa4_config','--',nuke,'-ix']
             
-        command = ['rez-env', nuke_ver,'--',nuke,'-ix']
-
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
         command.append( nuke_script_file )
+        mov_p = subprocess.run( command )
 
-        try:
-            print(command)
-            mov_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make mov {}".format(e))
 
     def create_hdr_mov( self, qc = False ):
         if self.selected_type == "image" or self.selected_type == "mov":
@@ -156,10 +151,7 @@ class Transcoding(object):
             command = ['rez-env', nuke_ver ,'hdr_config','--',nuke,'-ix']
             command.append( hdr_nuke_script )       
 
-            try:
-                hdr_p = subprocess.check_call(command)
-            except Exception as e:
-                raise Exception("make hdr mov {}".format(e))
+            hdr_p = subprocess.run(command)
     
     def create_hdr_nuke_script( self, qc = False ):
         if qc:
@@ -293,12 +285,8 @@ class Transcoding(object):
             command.append("-vf")
             command.append("pad='ceil(iw/2)*2:ceil(ih/2)*2'")
         command.append( mp4_path )
+        mp4_p = subprocess.run(command)
         
-
-        try:
-            mp4_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make mp4 {}".format(e))
 
     def create_webm(self, qc = False ):
         qc_prefix = 'qc_' if qc else '' 
@@ -360,7 +348,6 @@ class Transcoding(object):
         else:
         
             command = ['rez-env','ffmpeg','--','ffmpeg','-y']
-            # command = ['C:\\ffmpeg\\bin\\ffmpeg.exe', '-y']
             command.append("-i")
             if mov_webm_path :
                 command.append(mov_webm_path.replace("/","\\"))
@@ -384,11 +371,7 @@ class Transcoding(object):
             command.append("42")
             command.append(webm_path.replace("/","\\"))
 
-        webm_p = subprocess.check_call(command)
-        # try:
-        #     webm_p = subprocess.check_call(command)
-        # except Exception as e:
-            # raise Exception("make webm {}".format(e))
+        webm_p = subprocess.run(command)
 
     def create_nuke_script(self, qc = False ):
 
@@ -720,11 +703,13 @@ class Transcoding(object):
         command.append("-f")
         command.append("image2")
         command.append( thumbnail_file )
+        webm_p = subprocess.run(command)
 
-        try:
-            webm_p = subprocess.check_call(command)
-        except Exception as e:
-            raise Exception("make webm {}".format(e))
+
+#        try:
+#            webm_p = subprocess.check_call(command)
+#        except Exception as e:
+#            raise Exception("make webm {}".format(e))
 
 
     def _get_mov_frame(self,mov_file):
@@ -746,12 +731,22 @@ class Transcoding(object):
         command.append("-v")
         command.append("quiet")
 
-        try:
-            webm_p = subprocess.Popen(command,stdout=subprocess.PIPE)
-            output,err = webm_p.communicate()
-            return int(output)
-        except Exception as e:
-            raise Exception("make webm {}".format(e))
+#        webm_p = subprocess.Popen(command,stdout=subprocess.PIPE)
+#        output,err = webm_p.communicate()
+#        webm_p = subprocess.check_output(command, text = True )
+        webm_p = subprocess.run(command, stdout=subprocess.PIPE , text = True )
+
+
+
+        return int(webm_p.stdout )
+
+#        try:
+
+#            webm_p = subprocess.Popen(command,stdout=subprocess.PIPE)
+#            output,err = webm_p.communicate()
+#            return int(output)
+#        except Exception as e:
+#            raise Exception("make webm {}".format(e))
         
         
 
@@ -834,7 +829,7 @@ class Transcoding(object):
             # thumb_template =  thumb_template.replace("%","%%")
             command.append(thumb_template.replace("/","\\"))
 
-        webm_p = subprocess.check_call(command)
+        webm_p = subprocess.run(command)
         # try:
         #     webm_p = subprocess.check_call(command)
         # except Exception as e:
@@ -886,10 +881,9 @@ class Transcoding(object):
             command.append("92")
             command.append( filmstream_file.replace("/","\\"))
 
-        print( )
-        print( command )
-        print( )
-        webm_p = subprocess.check_call(command)
+        with open( 'c:\\opt\\ouput.log' , 'w' ) as f:
+            f.write( str(command) )
+        webm_p = subprocess.run(command)
         # try:
         #     webm_p = subprocess.check_call(command)
         # except Exception as e:
@@ -913,10 +907,11 @@ class Transcoding(object):
             command = ['rm','-rf', thumbnail_path]
         #else:
             #command = ['rd','/S','/Q',self.thumbnail_path.replace("/","\\")]
-            try:
-                webm_p = subprocess.check_call(command)
-            except Exception as e:
-                raise Exception("rm thumbnail_path {0},{1}".format(e,command))
+            webm_p = subprocess.run(command)
+#            try:
+#                webm_p = subprocess.check_call(command)
+#            except Exception as e:
+#                raise Exception("rm thumbnail_path {0},{1}".format(e,command))
 
 class UploadVersion(object):
     
@@ -985,6 +980,10 @@ class UploadVersion(object):
 
         if self.selected_type == "image":
             return
+
+        if platform.system() == 'Windows' :
+            filmstream_file = filmstream_file.replace( '\\' , '\\\\' )
+
 
         self.sg.upload_filmstrip_thumbnail("Version",self.version['id'],filmstream_file)
         os.remove(filmstream_file)
