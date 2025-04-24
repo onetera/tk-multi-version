@@ -115,17 +115,17 @@ class Transcoding(object):
         nuke_ver = 'nuke-13' if qc else 'nuke-12'
         command = ['rez-env', nuke_ver,'--',nuke,'-ix']
 
-        if platform.system() == 'Linux':
-            if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-                command = ['rez-env', nuke_ver ,'ocio_config','--',nuke,'-ix']
-            if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-                command = ['rez-env', nuke_ver,'alexa_config','--',nuke,'-ix']
-            if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-                command = ['rez-env', nuke_ver,'legacy_config','--',nuke,'-ix']
-            if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-                command = ['rez-env', nuke_ver,'sony_config','--',nuke,'-ix']
-            if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
-                command = ['rez-env', nuke_ver,'alexa4_config','--',nuke,'-ix']
+        #if platform.system() == 'Linux':
+        if not self.output_info['sg_colorspace'].find("ACES") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver ,'ocio_config','--',nuke,'-ix']
+        if not self.output_info['sg_colorspace'].find("Alexa") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver,'alexa_config','--',nuke,'-ix']
+        if not self.output_info['sg_colorspace'].find("legacy") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver,'legacy_config','--',nuke,'-ix']
+        if not self.output_info['sg_colorspace'].find("Sony") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver,'sony_config','--',nuke,'-ix']
+        if not self.output_info['sg_colorspace'].find("Arri4") == -1 and self.fileinfo.tail() in ['.dpx','.exr']:
+            command = ['rez-env', nuke_ver,'alexa4_config','--',nuke,'-ix']
             
         nuke_script_file = self.qc_tmp_nuke_script_file if qc else self.tmp_nuke_script_file
 
@@ -803,7 +803,13 @@ class Transcoding(object):
         
 
         select_code = self._get_mov_frame( mov_path )
+<<<<<<< HEAD
         select_code = int( select_code / 30 )
+=======
+        #select_code /= 30
+        select_code = int( select_code / 30 )
+
+>>>>>>> f3ea882a069527cb5e684df62ecacc84711e2d37
         if select_code == 0:
             select_code = 1
         if platform.system() == "Linux":
@@ -891,6 +897,11 @@ class Transcoding(object):
             command.append("92")
             command.append( filmstream_file.replace("/","\\"))
 
+<<<<<<< HEAD
+=======
+#        with open( 'c:\\opt\\ouput.log' , 'w' ) as f:
+#            f.write( str(command) )
+>>>>>>> f3ea882a069527cb5e684df62ecacc84711e2d37
         webm_p = subprocess.run(command)
         # try:
         #     webm_p = subprocess.check_call(command)
