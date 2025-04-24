@@ -803,13 +803,8 @@ class Transcoding(object):
         
 
         select_code = self._get_mov_frame( mov_path )
-<<<<<<< HEAD
-        select_code = int( select_code / 30 )
-=======
-        #select_code /= 30
         select_code = int( select_code / 30 )
 
->>>>>>> f3ea882a069527cb5e684df62ecacc84711e2d37
         if select_code == 0:
             select_code = 1
         if platform.system() == "Linux":
@@ -897,11 +892,8 @@ class Transcoding(object):
             command.append("92")
             command.append( filmstream_file.replace("/","\\"))
 
-<<<<<<< HEAD
-=======
 #        with open( 'c:\\opt\\ouput.log' , 'w' ) as f:
 #            f.write( str(command) )
->>>>>>> f3ea882a069527cb5e684df62ecacc84711e2d37
         webm_p = subprocess.run(command)
         # try:
         #     webm_p = subprocess.check_call(command)
