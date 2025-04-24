@@ -429,6 +429,7 @@ class Transcoding(object):
         self.output_info = shotgun.find_one("Project",[['id','is',project['id']]],
                                ['sg_colorspace','sg_mov_codec',
                                'sg_out_format','sg_fps','sg_mov_colorspace'])
+        self.sg_colorspace = self.output_info['sg_colorspace']
         
         if entity_ent['type'] == "Asset" :
             shot_info = {'sg_colorspace':''}
@@ -510,15 +511,20 @@ class Transcoding(object):
             timecard = timecard / 60
         
 
-
+        if platform.system() in ('Windows',"Microsoft"):
+            seq_colorspace = self.sg_colorspace
+        else:
+            seq_colorspace = self.seq_colorspace
         nk = ''
         nk += '#-*- coding: utf-8 -*-\n'
         nk += 'import nuke\n'
         nk += 'import os\n'
         nk += 'nuke.knob("root.first_frame", "{}" )\n'.format(self.fileinfo.start())
         nk += 'nuke.knob("root.last_frame", "{}" )\n'.format(self.fileinfo.end() )
-        #if not setting.colorspace.find("ACES") == -1:
-        #    nk += 'nuke.root()["colorManagement"].setValue("OCIO")\n'
+        if platform.system() in ('Windows',"Microsoft"):
+            nk += 'nuke.root()["colorManagement"].setValue("OCIO")\n'
+            # if not setting.colorspace.find("ACES") == -1:
+                # nk += 'nuke.root()["colorManagement"].setValue("OCIO")\n'
         #    nk += 'nuke.root()["OCIO_config"].setValue("aces_1.0.1")\n'
 
         if platform.system() in ('Windows',"Microsoft"):
@@ -527,12 +533,13 @@ class Transcoding(object):
             nk += 'read = nuke.nodes.Read( name="Read1",file="{}" )\n'.format( self.read_path )
         nk += 'read["first"].setValue( {} )\n'.format(self.fileinfo.start() )
         nk += 'read["last"].setValue( {} )\n'.format(self.fileinfo.end())
-        # if self.fileinfo.tail() in ['.dpx','.exr']: if self.seq_colorspace != "NONE":
-        #         nk += 'read["colorspace"].setValue( "{}")\n'.format(self.seq_colorspace)
-        #     else:
-        #         nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
-        # else:
-        #     nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
+        if self.fileinfo.tail() in ['.dpx','.exr']: 
+            if self.seq_colorspace != "NONE":
+                nk += 'read["colorspace"].setValue( "{}")\n'.format( seq_colorspace )
+            else:
+                nk += 'read["colorspace"].setValue( "{}")\n'.format(setting.colorspace)
+        else:
+            nk += 'read["colorspace"].setValue( "{}")\n'.format("rec709")
         
         if platform.system() in ('Windows',"Microsoft"):
             nk += 'output = "{}"\n'.format( mov_path.replace("\\","/") )
@@ -594,13 +601,13 @@ class Transcoding(object):
                 nk += 'write["mov64_fps"].setValue(23.976)\n'
             else:
                 nk += 'write["mov64_fps"].setValue(24)\n'
-        # if self.fileinfo.tail() in ['.dpx','.exr']:
-        #     if self.mov_colorspace != "NONE":
-        #         nk += 'write["colorspace"].setValue( "{}")\n'.format(self.mov_colorspace)
-        #     else:
-        #         nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
-        # else:
-        #     nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
+        if self.fileinfo.tail() in ['.dpx','.exr']:
+            if self.mov_colorspace != "NONE":
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.mov_colorspace)
+            else:
+                nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
+        else:
+            nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
         nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
         #fix play webm in chrome and firefox 
@@ -641,20 +648,20 @@ class Transcoding(object):
             if self.setting.dnxhd_profile:
                 nk += 'write["mov64_dnxhd_codec_profile"].setValue( "{}")\n'.format(self.setting.dnxhd_profile )
 
-            # if self.context.project['name'] in ['voice4','robin', 'westworld']:
-            #     nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
-            # elif self.fps_checked:
-            #     nk += 'write["mov64_fps"].setValue(23.976)\n'
-            # else:
-            #     nk += 'write["mov64_fps"].setValue(24)\n'
-            # if self.fileinfo.tail() in ['.dpx','.exr']:
-            #     if self.mov_colorspace != "NONE":
-            #         nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
-            #     else:
-            #         nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
+            if self.context.project['name'] in ['voice4','robin', 'westworld']:
+                nk += 'write["mov64_fps"].setValue({})\n'.format(setting.mov_fps)
+            elif self.fps_checked:
+                nk += 'write["mov64_fps"].setValue(23.976)\n'
+            else:
+                nk += 'write["mov64_fps"].setValue(24)\n'
+            if self.fileinfo.tail() in ['.dpx','.exr']:
+                if self.mov_colorspace != "NONE":
+                    nk += 'write["colorspace"].setValue( "{}")\n'.format(setting.mov_colorspace)
+                else:
+                    nk += 'write["colorspace"].setValue( "{}")\n'.format(self.setting.mov_colorspace)
                 
-            # else:
-            #     nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
+            else:
+                nk += 'write["colorspace"].setValue( "{}")\n'.format("rec709")
             nk += 'nuke.execute(write,{0},{1},1)\n'.format(self.fileinfo.start(),
                                                      self.fileinfo.end())
 
@@ -796,7 +803,7 @@ class Transcoding(object):
         
 
         select_code = self._get_mov_frame( mov_path )
-        select_code /= 30
+        select_code = int( select_code / 30 )
         if select_code == 0:
             select_code = 1
         if platform.system() == "Linux":
@@ -828,6 +835,9 @@ class Transcoding(object):
             command.append("image2")
             # thumb_template =  thumb_template.replace("%","%%")
             command.append(thumb_template.replace("/","\\"))
+
+        with open( 'c:\\opt\\ouput.log' , 'w' ) as f:
+            f.write( str(command) )
 
         webm_p = subprocess.run(command)
         # try:
@@ -881,8 +891,6 @@ class Transcoding(object):
             command.append("92")
             command.append( filmstream_file.replace("/","\\"))
 
-        with open( 'c:\\opt\\ouput.log' , 'w' ) as f:
-            f.write( str(command) )
         webm_p = subprocess.run(command)
         # try:
         #     webm_p = subprocess.check_call(command)
